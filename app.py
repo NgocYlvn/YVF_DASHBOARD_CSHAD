@@ -647,7 +647,7 @@ if page == "Overview":
             annotation_position="top right",
         )
         standard_chart_layout(fig, 300)
-        
+        fig.update_xaxes(
             categoryorder="array",
             categoryarray=monthly["Month Label"].tolist(),
             tickangle=0,
@@ -941,67 +941,59 @@ elif page == "Booking Performance":
     left, right = st.columns([1.55, 1])
 
     with left:
-     with left:
-    st.markdown(
-        '<div class="section-title">BOOKING TREND BY DATE</div>',
-        unsafe_allow_html=True,
-    )
+        st.markdown('<div class="section-title">BOOKING TREND BY DATE</div>', unsafe_allow_html=True)
+        daily = (
+            filtered_booking.groupby("Booking Date", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Booking Date")
+        )
+        fig = px.bar(daily, x="Booking Date", y="Bookings", text="Bookings")
+        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        standard_chart_layout(fig, 360)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    daily = (
-        filtered_booking.groupby("Booking Date", as_index=False)["Bookings"]
-        .sum()
-        .sort_values("Booking Date")
-    )
+    with right:
+        st.markdown('<div class="section-title">BOOKINGS BY MODE</div>', unsafe_allow_html=True)
+        by_mode = (
+            filtered_booking.groupby("Transport Mode", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=False)
+        )
+        fig = px.pie(
+            by_mode,
+            names="Transport Mode",
+            values="Bookings",
+            hole=0.55,
+        )
+        fig.update_traces(textposition="inside", textinfo="label+percent")
+        fig.update_layout(
+            height=360,
+            margin=dict(l=20, r=20, t=35, b=20),
+            paper_bgcolor="white",
+            showlegend=False,
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # Chuẩn hóa cột ngày và chỉ hiển thị ngày, không hiển thị giờ
-    daily["Booking Date"] = pd.to_datetime(
-        daily["Booking Date"],
-        errors="coerce",
-    )
+    st.markdown("<br>", unsafe_allow_html=True)
+    left, right = st.columns(2)
 
-    daily = daily.dropna(subset=["Booking Date"])
-
-    daily["Date Label"] = daily["Booking Date"].dt.strftime("%d %b")
-
-    fig = px.bar(
-        daily,
-        x="Date Label",
-        y="Bookings",
-        text="Bookings",
-        custom_data=["Booking Date"],
-    )
-
-    fig.update_traces(
-        marker_color="#0b63ce",
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate=(
-            "%{customdata[0]|%d %b %Y}"
-            "<br>Bookings: %{y}"
-            "<extra></extra>"
-        ),
-    )
-
-    standard_chart_layout(fig, 360)
-
-    fig.update_xaxes(
-        title_text="",
-        type="category",
-        categoryorder="array",
-        categoryarray=daily["Date Label"].tolist(),
-        tickangle=0,
-    )
-
-    fig.update_yaxes(
-        title_text="",
-        rangemode="tozero",
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={"displayModeBar": False},
-    )
+    with left:
+        st.markdown('<div class="section-title">BOOKINGS BY CUSTOMER</div>', unsafe_allow_html=True)
+        by_customer = (
+            filtered_booking.groupby("Customer Name", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=True)
+        )
+        fig = px.bar(
+            by_customer,
+            x="Bookings",
+            y="Customer Name",
+            orientation="h",
+            text="Bookings",
+        )
+        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        standard_chart_layout(fig, 330)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with right:
         st.markdown('<div class="section-title">PROCESSING TIME BY DATE</div>', unsafe_allow_html=True)
