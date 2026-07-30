@@ -298,7 +298,7 @@ if page == "🏠 Overview":
         "<div style='height:38px;'></div>",
         unsafe_allow_html=True,
     )
-    left, right = st.columns([1.12, 1])
+    left, right = st.columns([1.12, 1], gap="large")
     with left:
         status_order = ["Fully Adopted", "Trial Booking Completed", "No YVF Booking Yet"]
         status_counts = onboarded["YVF Booking Status"].value_counts().reindex(status_order, fill_value=0).reset_index()
