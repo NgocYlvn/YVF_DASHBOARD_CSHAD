@@ -302,28 +302,49 @@ if page == "🏠 Overview":
     )
     left, right = st.columns([1.12, 1], gap="large")
     with left:
-        status_order = ["Fully Booking", "Trial Booking", "Not Booking Yet"]
-        status_counts = onboarded["YVF Booking Status"].value_counts().reindex(status_order, fill_value=0).reset_index()
-        status_counts.columns = ["Status", "Customers"]
-        fig = px.bar(status_counts, x="Status", y="Customers", text="Customers", title="Approved Account Adoption Status",
-                     color="Status", color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-    with right:
-        gauge = go.Figure(go.Indicator(
-            mode="gauge+number+delta",
-            value=booking_achievement * 100,
-            number={"suffix": "%", "font": {"size": 34}},
-            delta={"reference": 100, "relative": False},
-            title={"text": "Monthly Booking Target Achievement"},
-            gauge={
-                "axis": {"range": [0, max(120, booking_achievement * 120)]},
-                "bar": {"color": ORANGE},
-                "steps": [{"range": [0, 70], "color": "#FBE9DF"}, {"range": [70, 100], "color": "#DDEAF5"}],
-                "threshold": {"line": {"color": GREEN, "width": 4}, "value": 100},
+        status_order = [
+            "Fully Booking",
+            "Trial Booking",
+            "Not Booking Yet"
+        ]
+        
+        status_counts = (
+            onboarded["YVF Booking Status"]
+            .astype(str)
+            .str.strip()
+            .value_counts()
+            .reindex(status_order, fill_value=0)
+            .rename_axis("Status")
+            .reset_index(name="Customers")
+        )
+        
+        fig = px.bar(
+            status_counts,
+            x="Status",
+            y="Customers",
+            text="Customers",
+            title="Booking Status",
+            color="Status",
+            category_orders={"Status": status_order},
+            color_discrete_map={
+                "Fully Booking": GREEN,
+                "Trial Booking": ORANGE,
+                "Not Booking Yet": "#9AA9B6",
             },
-        ))
-        st.plotly_chart(style_fig(gauge), use_container_width=True, config=PLOTLY_CONFIG)
+        )
+        
+        fig.update_traces(textposition="outside")
+        
+        fig.update_yaxes(
+            dtick=1,
+            rangemode="tozero"
+        )
+        
+        st.plotly_chart(
+            style_fig(fig),
+            use_container_width=True,
+            config=PLOTLY_CONFIG,
+        )
 
     c1, c2 = st.columns([1.25, 1])
     with c1:
