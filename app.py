@@ -242,8 +242,8 @@ if page == "🏠 Overview":
                      color="Status", color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"])
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig), use_container_width=True)
-with right:
-    gauge = go.Figure(
+    with right:
+        gauge = go.Figure(
         go.Indicator(
             mode="gauge+number+delta",
             value=booking_achievement * 100,
