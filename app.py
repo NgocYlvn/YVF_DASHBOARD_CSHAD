@@ -193,29 +193,43 @@ st.sidebar.markdown("## 📊 CS HAD")
 st.sidebar.caption("YVF Adoption Dashboard")
 page = st.sidebar.radio(
     "Navigation",
-["🏠 Overview", "👥 Adoption", "📦 Booking Status", "⚠️ User Issues", "💡Enhancement", "⭐Feedback"],
+    ["🏠 Overview", "👥 Adoption", "📦 Booking Status", "⚠️ User Issues", "💡Enhancement", "⭐Feedback"],
     label_visibility="collapsed",
 )
-st.sidebar.markdown("---")
-st.sidebar.caption("Data source")
-st.sidebar.success("Excel workbook connected")
-st.sidebar.caption("Update the Excel file in the data folder to refresh the dashboard.")
 
-# Overview values are stored in the final row of the sheet.
+updated_at = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y %H:%M")
+st.markdown(
+    f"""
+    <div class="hero">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <h1>{APP_TITLE}</h1>
+            <span style="font-size:13px;font-weight:600;white-space:nowrap;">
+                🕒 Last updated: {updated_at}
+            </span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 ov = overview.iloc[-1] if not overview.empty else pd.Series(dtype="object")
 eligible = safe_num(ov.get("Eligible Customers"))
 total_hbl = safe_num(ov.get("Total Export HBLs"))
-# Duplicate headers are auto-renamed by pandas; use position fallback where needed.
-onboarded_count = safe_num(ov.iloc[2] if len(ov) > 2 else 0)
-onboarding_rate = safe_num(ov.iloc[3] if len(ov) > 3 else 0)
+onboarded_count = safe_num(ov.get("Onboarded Customers"))
+onboarding_rate = onboarded_count / eligible if eligible > 0 else 0
 pending = safe_num(ov.get("Pending Customers"))
 active = safe_num(ov.get("Active YVF Customers"))
 yvf_bookings = safe_num(ov.get("YVF Bookings"))
 avg_time = safe_num(ov.get("Avg. Booking Time (min/booking)"))
-new_customer_target = safe_num(ov.iloc[8] if len(ov) > 8 else 0)
-monthly_target = safe_num(ov.iloc[9] if len(ov) > 9 else 0)
-source_adoption_rate = safe_num(ov.iloc[10] if len(ov) > 10 else 0)
+new_customer_target = safe_num(ov.get("New Customer Target"))
+monthly_target = safe_num(ov.get("Monthly Booking Target"))
+source_adoption_rate = (
+    onboarded_count / eligible
+    if eligible > 0
+    else 0
+)
 booking_achievement = yvf_bookings / monthly_target if monthly_target else 0
+
 
 if page == "🏠 Overview":
     cols = st.columns(6)
