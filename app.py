@@ -248,9 +248,10 @@ if page == "🏠 Overview":
             value=booking_achievement * 100,
             number={"suffix": "%", "font": {"size": 34}},
             delta={"reference": 100, "relative": False},
-            gauge.update_layout(
-    title="Monthly Booking Target Achievement"
-)
+        style_fig(gauge)
+        gauge.update_layout(
+            title_text="Monthly Booking Target Achievement"
+        )
             gauge={
                 "axis": {"range": [0, max(120, booking_achievement * 120)]},
                 "bar": {"color": ORANGE},
