@@ -72,9 +72,8 @@ st.markdown(
     }
 
     /* Compact header without covering messages or the dashboard title */
-    [data-testid="stHeader"] {
-        height: 3rem;
-        background: rgba(247, 249, 252, 0.96);
+    [data-testid="stHeader"]{
+        background: transparent;
     }
 
     [data-testid="stToolbar"] {
