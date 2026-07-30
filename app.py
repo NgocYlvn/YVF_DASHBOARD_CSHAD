@@ -178,17 +178,20 @@ def kpi(label: str, value: str) -> None:
 
 def style_fig(fig, height: int = 350):
     fig.update_layout(
-        height=height,
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        margin=dict(l=20, r=20, t=50, b=20),
         legend=dict(
-            x=0.82,
+            orientation="v",
+            x=1.02,
             y=0.5,
             xanchor="left",
             yanchor="middle"
+        ),
+        margin=dict(
+            l=20,
+            r=170,
+            t=60,
+            b=20
         )
-    )
+)
 
     fig.update_xaxes(
         showgrid=False,
