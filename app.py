@@ -179,17 +179,11 @@ def kpi(label: str, value: str) -> None:
 def style_fig(fig, height: int = 350):
 fig.update_layout(
     legend=dict(
-        orientation="v",
-        x=0.98,
+        x=0.82,
         y=0.5,
         xanchor="left",
-        yanchor="middle",
-        font=dict(size=14),
-        itemclick=False,
-        itemdoubleclick=False
-    ),
-    margin=dict(l=20, r=130, t=60, b=20)
-)
+        yanchor="middle"
+    )
     fig.update_xaxes(showgrid=False, linecolor="#E8EDF2")
     fig.update_yaxes(gridcolor="#EEF2F6", zeroline=False)
     return fig
