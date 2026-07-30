@@ -186,11 +186,11 @@ page = st.sidebar.radio(
     "Navigation",
     [
         "🏠 Overview",
-        "👥 Customer Adoption",
-        "📦 Booking Performance",
+        "👥 Adoption",
+        "📦 Booking Status",
         "⚠️ User Issues",
-        "💡 Improvement Proposals",
-        "⭐ Customer Feedback",
+        "💡 Enhancement",
+        "⭐ Feedback",
     ],
     label_visibility="collapsed",
 )
