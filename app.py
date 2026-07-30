@@ -179,6 +179,9 @@ def kpi(label: str, value: str, note: str = "") -> None:
 
 def style_fig(fig, height: int = 350):
     fig.update_layout(
+        height=height,
+        paper_bgcolor="white",
+        plot_bgcolor="white",
         legend=dict(
             orientation="v",
             x=1.02,
@@ -192,7 +195,7 @@ def style_fig(fig, height: int = 350):
             t=60,
             b=20
         )
-)
+    )
 
     fig.update_xaxes(
         showgrid=False,
@@ -412,31 +415,46 @@ if page == "🏠 Overview":
         )
 
         fig.update_traces(
-            textposition="outside"
+            textposition="outside",
+            cliponaxis=False
+        )
+
+        max_customer_booking = (
+            safe_num(booking_by_customer["Bookings"].max())
+            if not booking_by_customer.empty
+            else 0
         )
 
         fig.update_xaxes(
             title=None,
-            showgrid=True
+            range=[0, max_customer_booking * 1.18] if max_customer_booking > 0 else [0, 1],
+            showgrid=True,
+            gridcolor="#EEF2F6",
+            linecolor="#E8EDF2"
         )
 
         fig.update_yaxes(
-            title=None
+            title=None,
+            gridcolor="#EEF2F6",
+            zeroline=False
         )
 
         fig.update_layout(
+            height=285,
+            paper_bgcolor="white",
+            plot_bgcolor="white",
             showlegend=False,
             bargap=0.22,
             margin=dict(
-                l=20,
-                r=45,
-                t=45,
-                b=10
+                l=25,
+                r=70,
+                t=50,
+                b=15
             )
         )
 
         st.plotly_chart(
-            style_fig(fig, 270),
+            fig,
             use_container_width=True,
             config=PLOTLY_CONFIG,
         )
@@ -604,7 +622,7 @@ elif page == "💡 Enhancement":
     display = proposals.copy(); display["Proposal Date"] = display["Proposal Date"].dt.strftime("%d-%b-%Y")
     st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=380)
 
-elif page == "⭐ Customer Feedback":
+elif page == "⭐ Feedback":
     feedback = normalize_dates(load_sheet(str(DATA_FILE), "Customer_Feedback", file_mtime_ns), ["Feedback Date"])
     c = st.columns(4)
     with c[0]: kpi("Positive Feedback", fmt_int(len(feedback)), "Recorded customer comments")
