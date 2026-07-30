@@ -737,7 +737,7 @@ elif page == "Customer Adoption":
         kpi_card("Pending Target", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    left, right = st.columns([1.2, 1])
+    left, right = st.columns([1.6, 1])
 
     with left:
         st.markdown('<div class="section-title">CUSTOMER STATUS & VOLUME</div>', unsafe_allow_html=True)
@@ -749,7 +749,7 @@ elif page == "Customer Adoption":
             adoption_table,
             hide_index=True,
             use_container_width=True,
-            height=460,
+            height=520,
             column_config={
                 "Total Volume": st.column_config.NumberColumn(
                     "Export HBL Volume", format="%d"
