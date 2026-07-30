@@ -30,7 +30,7 @@ NAV_ITEMS = [
     "Overview",
     "Customer Adoption",
     "Booking Performance",
-    "Issues & Improvement",
+    "Issues & Improvements",
 ]
 
 
@@ -1063,9 +1063,9 @@ else:
     with c2:
         kpi_card("Completed Issues", completed_issues, accent="accent-green")
     with c3:
-        kpi_card("Open Proposals", open_proposals, accent="accent-amber")
+        kpi_card("Open Improvements", open_proposals, accent="accent-amber")
     with c4:
-        kpi_card("Completed Proposals", completed_proposals, accent="accent-green")
+        kpi_card("Completed Improvements", completed_proposals, accent="accent-green")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns(2)
