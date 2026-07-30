@@ -50,7 +50,7 @@ h1, h2, h3 {color: #17324D;}
     border-radius: 14px;
     color: white;
     box-shadow: 0 4px 12px rgba(11,79,138,.12);
-    margin-bottom: 12px;
+    margin-bottom: 28px;
 }
 
 .hero h1 {
