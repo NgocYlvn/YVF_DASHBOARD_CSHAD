@@ -243,7 +243,7 @@ if page == "🏠 Overview":
     bookings = normalize_dates(load_sheet(str(DATA_FILE), "Booking_Records", file_mtime_ns), ["Booking Date"])
     feedback = normalize_dates(load_sheet(str(DATA_FILE), "Customer_Feedback", file_mtime_ns), ["Feedback Date"])
     issues = normalize_dates(load_sheet(str(DATA_FILE), "User Issues", file_mtime_ns), ["Date"])
-    cols = st.columns(4, gap="large")
+    cols = st.columns(4)
     with cols[0]:
         kpi("Eligible Customers", fmt_int(eligible), "Target customer pool")
     with cols[1]:
