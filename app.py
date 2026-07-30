@@ -66,20 +66,45 @@ h1, h2, h3 {color: #17324D;}
     font-size:13px;          /* trước là 15px */
 }
 .kpi-card{
-    background:white;
-    border:1px solid #E5EAF0;
-    border-radius:16px;
+    background:#FFFFFF;
+    border:1px solid #E2E8F0;
+    border-radius:18px;
     box-shadow:0 4px 14px rgba(23,50,77,.06);
 
-    height:190px;              /* tất cả KPI cao bằng nhau */
-    padding:24px;
+    height:155px;
+    padding:24px 28px;
 
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
+    align-items:flex-start;
+    justify-content:center;
+    gap:22px;
+
+    box-sizing:border-box;
 }
-.kpi-label {font-size:13px; color:#68798A; font-weight:600; margin-bottom:10px;}
-.kpi-value {font-size:29px; font-weight:750; color:#17324D; line-height:1.05;}
+
+.kpi-label{
+    font-size:15px;
+    color:#68798A;
+    font-weight:650;
+    line-height:1.3;
+    margin:0;
+    width:100%;
+}
+
+.kpi-value{
+    font-size:38px;
+    font-weight:750;
+    color:#17324D;
+    line-height:1;
+    margin:0;
+    width:100%;
+}
+
+/* Không hiển thị dòng ghi chú */
+.kpi-note{
+    display:none;
+}
 .kpi-note {font-size:12px; color:#7D8B99; margin-top:8px;}
 .section-title {font-size:18px; font-weight:750; color:#17324D; margin:8px 0 10px;}
 .insight {background:white; border-left:5px solid #F36F21; border-radius:12px; padding:15px 17px; box-shadow:0 4px 14px rgba(23,50,77,.05); margin:4px 0 12px;}
