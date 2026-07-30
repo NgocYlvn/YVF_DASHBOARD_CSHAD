@@ -482,22 +482,7 @@ if page == "🏠 Overview":
         unsafe_allow_html=True,
     )
 
-    latest = (
-        issues
-        .sort_values("Date", ascending=False)
-        .head(4)[["Date", "Customer", "Issue", "Status"]]
-        .copy()
-    )
-
-    latest["Date"] = latest["Date"].dt.strftime("%d-%b-%Y")
-
-    st.dataframe(
-        latest,
-        hide_index=True,
-        use_container_width=True,
-        height=220
-    )
-
+    
 elif page == "👥 Adoption":
     onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
     volume = load_sheet(str(DATA_FILE), "Customer_Volume", file_mtime_ns)
