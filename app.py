@@ -1,5 +1,6 @@
-
 from pathlib import Path
+
+code = r'''from pathlib import Path
 import io
 import re
 
@@ -305,12 +306,11 @@ def read_source_file(uploaded_file=None):
     detected = [str(p.relative_to(app_dir)) for p in all_excel_files]
     if detected:
         st.warning("Đã tìm thấy file Excel nhưng cấu trúc sheet chưa đúng:")
-        st.code("\\n".join(detected))
+        st.code("\n".join(detected))
     else:
         st.warning("Repository hiện không có file `.xlsx` hoặc `.xlsm`.")
 
     st.stop()
-
 
 
 def safe_divide(numerator, denominator):
@@ -344,7 +344,6 @@ def prepare_data(data):
     feedback = data["Customer_Feedback"].copy()
     issues = data["User Issues"].copy()
 
-    # Remove summary rows from customer source.
     customer = customer[
         pd.to_numeric(customer.get("No."), errors="coerce").notna()
     ].copy()
@@ -544,7 +543,6 @@ st.markdown(
 # PAGE 1: OVERVIEW
 # ============================================================
 if page == "Overview":
-    # Six executive KPI cards with equal width and height
     cols = st.columns(6, gap="small")
     with cols[0]:
         kpi_card("Eligible Customers", f"{metrics['eligible']}")
@@ -611,7 +609,6 @@ if page == "Overview":
     with right:
         st.markdown('<div class="section-title">BOOKING TREND (VIA YVF)</div>', unsafe_allow_html=True)
 
-        # Fixed FY2026 reporting months: Jul-2026 to Mar-2027.
         month_axis = pd.date_range("2026-07-01", "2027-03-01", freq="MS")
         monthly_actual = (
             booking[booking["YVF Used"].str.casefold().eq("yes")]
@@ -659,7 +656,6 @@ if page == "Overview":
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-title">BOOKINGS BY ONBOARDED CUSTOMER</div>', unsafe_allow_html=True)
 
-    # Show every customer listed in Onboarded_Customers, including customers with zero bookings.
     onboarded_names = (
         onboarded[["Customer Name"]]
         .dropna()
@@ -773,9 +769,9 @@ elif page == "Customer Adoption":
             text="Customers",
         )
         fig.update_traces(
-    textposition="outside",
-    cliponaxis=False
-)
+            textposition="outside",
+            cliponaxis=False,
+        )
         standard_chart_layout(fig, 400)
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -941,16 +937,65 @@ elif page == "Booking Performance":
     left, right = st.columns([1.55, 1])
 
     with left:
-        st.markdown('<div class="section-title">BOOKING TREND BY DATE</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-title">BOOKING TREND BY DATE</div>',
+            unsafe_allow_html=True,
+        )
+
         daily = (
             filtered_booking.groupby("Booking Date", as_index=False)["Bookings"]
             .sum()
             .sort_values("Booking Date")
         )
-        fig = px.bar(daily, x="Booking Date", y="Bookings", text="Bookings")
-        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+
+        # Convert the date to a text label so Plotly does not display 00:00 or 12:00.
+        daily["Booking Date"] = pd.to_datetime(
+            daily["Booking Date"],
+            errors="coerce",
+        )
+        daily = daily.dropna(subset=["Booking Date"])
+        daily["Date Label"] = daily["Booking Date"].dt.strftime("%d %b")
+
+        fig = px.bar(
+            daily,
+            x="Date Label",
+            y="Bookings",
+            text="Bookings",
+            custom_data=["Booking Date"],
+            category_orders={"Date Label": daily["Date Label"].tolist()},
+        )
+
+        fig.update_traces(
+            marker_color="#0b63ce",
+            textposition="outside",
+            cliponaxis=False,
+            hovertemplate=(
+                "%{customdata[0]|%d %b %Y}"
+                "<br>Bookings: %{y}"
+                "<extra></extra>"
+            ),
+        )
+
         standard_chart_layout(fig, 360)
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+        fig.update_xaxes(
+            type="category",
+            categoryorder="array",
+            categoryarray=daily["Date Label"].tolist(),
+            tickangle=0,
+            title_text="",
+        )
+
+        fig.update_yaxes(
+            title_text="",
+            rangemode="tozero",
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
 
     with right:
         st.markdown('<div class="section-title">BOOKINGS BY MODE</div>', unsafe_allow_html=True)
@@ -1175,3 +1220,12 @@ st.markdown(
     '© 2026 CS HAD | Internal Use Only | Version 1.0</div>',
     unsafe_allow_html=True,
 )
+'''
+
+output = Path("/mnt/data/app_updated_date_display.py")
+output.write_text(code, encoding="utf-8")
+
+# Syntax check
+compile(code, str(output), "exec")
+
+print(f"Created: {output}")
