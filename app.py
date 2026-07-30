@@ -184,6 +184,7 @@ fig.update_layout(
         xanchor="left",
         yanchor="middle"
     )
+)
     fig.update_xaxes(showgrid=False, linecolor="#E8EDF2")
     fig.update_yaxes(gridcolor="#EEF2F6", zeroline=False)
     return fig
