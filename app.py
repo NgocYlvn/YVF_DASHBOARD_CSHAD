@@ -293,7 +293,11 @@ if page == "🏠 Overview":
         kpi("Adoption Rate", fmt_pct(source_adoption_rate))
     with cols[3]:
         kpi("Number of Bookings", fmt_int(yvf_bookings))
-
+  
+    st.markdown(
+        "<div style='height:38px;'></div>",
+        unsafe_allow_html=True,
+    )
     left, right = st.columns([1.12, 1])
     with left:
         status_order = ["Fully Adopted", "Trial Booking Completed", "No YVF Booking Yet"]
