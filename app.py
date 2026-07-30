@@ -1,195 +1,259 @@
-from __future__ import annotations
 
-from datetime import datetime
-from io import BytesIO
 from pathlib import Path
-from typing import Dict, Iterable
-from zoneinfo import ZoneInfo
+import io
+import re
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
 
-APP_TITLE = "CS HAD – YVF Adoption Dashboard"
-DATA_FILE = Path(__file__).parent / "YVF_Adoption_Dashboard_Source.xlsx"
-BLUE = "#003B7A"
-ORANGE = "#F58220"
-DARK = "#003B7A"
-GREEN = "#16A34A"
-RED = "#DC2626"
-LIGHT_BLUE = "#EAF2F8"
+# ============================================================
+# APP CONFIGURATION
+# ============================================================
+st.set_page_config(
+    page_title="YVF Adoption Dashboard - CS HAD",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-st.set_page_config(page_title=APP_TITLE, page_icon="📊", layout="wide", initial_sidebar_state="expanded")
+APP_TITLE = "YVF Adoption Dashboard – CS HAD"
+DEFAULT_DATA_FILE = "YVF_Adoption_Data.xlsx"
+FY_LABEL = "FY2026"
+ONBOARDING_TARGET = 6
+BOOKING_TARGET = 500
 
+NAV_ITEMS = [
+    "Overview",
+    "Customer Adoption",
+    "Booking Performance",
+    "Issues & Improvement",
+]
+
+
+# ============================================================
+# STYLE
+# ============================================================
 st.markdown(
     """
-<style>
-[data-testid="stAppViewContainer"] {background: #FFFFFF;}
-[data-testid="stSidebar"] {background: linear-gradient(180deg, #002F61 0%, #003B7A 100%);}
-[data-testid="stSidebar"] * {color: #FFFFFF;}
-[data-testid="stSidebar"] .stRadio label {padding: .35rem .5rem; border-radius: 8px;}
-[data-testid="stSidebar"] .stRadio label:hover {background: rgba(255,255,255,.10);}
-.block-container {
-    padding-top: 1.25rem;
-    padding-bottom: 2rem;
-    padding-left: 2.25rem;
-    padding-right: 2.25rem;
-    max-width: 1500px;
-}
-[data-testid="stAppViewContainer"] .main {overflow-x: hidden;}
-[data-testid="stAppViewContainer"] section.main {min-width: 0;}
-[data-testid="collapsedControl"] {left: 0.75rem; top: 0.75rem; z-index: 1000;}
-@media (max-width: 1200px) {
-    .block-container {padding-left: 4rem; padding-right: 1.25rem;}
-}
-h1, h2, h3 {color: #003B7A;}
-.hero {
-    background: linear-gradient(110deg,#003B7A,#005A9C);
-    padding: 12px 22px;      /* trước là 22px 26px */
-    border-radius: 14px;
-    color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(11,79,138,.12);
-    margin-bottom: 28px;
-}
+    <style>
+    :root {
+        --navy: #083b82;
+        --blue: #0b63ce;
+        --orange: #ed6b21;
+        --green: #169b62;
+        --amber: #f59e0b;
+        --red: #dc2626;
+        --text: #172033;
+        --muted: #667085;
+        --line: #dbe4f0;
+        --panel: #ffffff;
+        --soft: #f6f9fd;
+    }
 
-.hero h1 {
-    color:#FFFFFF;
-    margin:0;
-    font-size:22px;          /* trước là 30px */
-    font-weight:700;
-}
+    .stApp {
+        background: #f7f9fc;
+        color: var(--text);
+    }
 
-.hero p {
-    margin:4px 0 0 0;
-    opacity:.9;
-    font-size:13px;          /* trước là 15px */
-}
-.kpi-card{
-    background:#F8FAFC;
-    border:1px solid #E5E7EB;
-    border-radius:18px;
-    box-shadow:0 4px 14px rgba(23,50,77,.06);
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #073472 0%, #0b4d9b 100%);
+    }
 
-    height:155px;
-    padding:24px 28px;
+    [data-testid="stSidebar"] * {
+        color: white;
+    }
 
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    justify-content:center;
-    gap:22px;
+    [data-testid="stSidebar"] .stRadio label {
+        font-weight: 600;
+    }
 
-    box-sizing:border-box;
-}
+    .block-container {
+        max-width: 1600px;
+        padding-top: 1.1rem;
+        padding-bottom: 2rem;
+    }
 
-.kpi-label{
-    font-size:15px;
-    color:#6B7280;
-    font-weight:650;
-    line-height:1.3;
-    margin:0;
-    width:100%;
-}
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--navy);
+        margin: 0 0 0.15rem 0;
+        letter-spacing: -0.02em;
+    }
 
-.kpi-value{
-    font-size:38px;
-    font-weight:750;
-    color:#003B7A;
-    line-height:1;
-    margin:0;
-    width:100%;
-}
+    .dashboard-subtitle {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin-bottom: 1rem;
+    }
 
-/* Không hiển thị dòng ghi chú */
-.kpi-note{
-    display:none;
-}
-.kpi-note {font-size:12px; color:#6B7280; margin-top:8px;}
-.section-title {font-size:18px; font-weight:750; color:#003B7A; margin:8px 0 10px;}
-.insight {background:white; border-left:5px solid #F58220; border-radius:12px; padding:15px 17px; box-shadow:0 4px 14px rgba(23,50,77,.05); margin:4px 0 12px;}
-.insight p {margin:0 0 9px 0; line-height:1.65;}
-.insight p:last-child {margin-bottom:0;}
-.quote-card {background:white; border:1px solid #E5E7EB; border-radius:14px; padding:16px 18px; height:100%; box-shadow:0 3px 12px rgba(23,50,77,.05);}
-.quote {font-size:16px; color:#003B7A; line-height:1.55;}
-.quote-meta {font-size:12px; color:#6B7280; margin-top:10px; font-weight:650;}
-.small-muted {font-size:12px;color:#6B7280;}
-div[data-testid="stDataFrame"] {border:1px solid #E5E7EB; border-radius:12px; overflow:hidden;}
-.target-card {
-    background:#F8FAFC;
-    border:1px solid #E5E7EB;
-    border-radius:16px;
-    padding:18px 20px;
-    min-height:132px;
-    box-sizing:border-box;
-}
-.target-title {font-size:14px;color:#6B7280;font-weight:650;margin-bottom:10px;}
-.target-row {display:flex;justify-content:space-between;align-items:flex-end;gap:16px;}
-.target-actual {font-size:30px;font-weight:750;color:#003B7A;line-height:1;}
-.target-meta {font-size:13px;color:#6B7280;text-align:right;line-height:1.55;}
-.progress-shell {height:12px;background:#E5E7EB;border-radius:99px;overflow:hidden;margin-top:16px;}
-.progress-fill {height:100%;border-radius:99px;}
-.data-warning {
-    background:#FFF7ED;
-    border-left:5px solid #F58220;
-    border-radius:10px;
-    padding:12px 14px;
-    margin:8px 0 14px;
-}
-</style>
-""",
+    .section-title {
+        background: var(--navy);
+        color: white;
+        padding: 0.55rem 0.85rem;
+        border-radius: 10px 10px 0 0;
+        font-weight: 750;
+        margin-top: 0.25rem;
+    }
+
+    .kpi-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0.9rem 0.85rem;
+        min-height: 132px;
+        box-shadow: 0 2px 10px rgba(28, 54, 89, 0.05);
+    }
+
+    .kpi-label {
+        color: var(--navy);
+        font-size: 0.88rem;
+        font-weight: 750;
+        line-height: 1.25;
+        min-height: 42px;
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--blue);
+        margin-top: 0.35rem;
+    }
+
+    .kpi-note {
+        color: var(--muted);
+        font-size: 0.78rem;
+        margin-top: 0.35rem;
+    }
+
+    .accent-orange .kpi-value { color: var(--orange); }
+    .accent-green .kpi-value { color: var(--green); }
+    .accent-amber .kpi-value { color: var(--amber); }
+    .accent-red .kpi-value { color: var(--red); }
+
+    .insight-box {
+        background: #ffffff;
+        border-left: 5px solid var(--orange);
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        border-top: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+    }
+
+    .small-note {
+        font-size: 0.8rem;
+        color: var(--muted);
+    }
+
+    div[data-testid="stDataFrame"] {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .status-open {
+        color: var(--red);
+        font-weight: 700;
+    }
+
+    .status-completed {
+        color: var(--green);
+        font-weight: 700;
+    }
+
+    .footer-note {
+        color: var(--muted);
+        font-size: 0.78rem;
+        padding-top: 0.8rem;
+    }
+    </style>
+    """,
     unsafe_allow_html=True,
 )
 
 
+# ============================================================
+# HELPERS
+# ============================================================
 def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df.columns = [str(c).strip() for c in df.columns]
-    return df.dropna(how="all")
+    df.columns = [
+        re.sub(r"\s+", " ", str(c).replace("\n", " ")).strip()
+        for c in df.columns
+    ]
+    return df
 
 
-@st.cache_data(show_spinner=False, max_entries=20)
-def get_sheet_names(path: str, file_mtime_ns: int) -> tuple[str, ...]:
-    # file_mtime_ns is intentionally included so the cache refreshes only
-    # when the source workbook actually changes.
-    del file_mtime_ns
-    return tuple(pd.ExcelFile(path, engine="openpyxl").sheet_names)
+def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
+    return df.dropna(how="all").reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, max_entries=30)
-def load_sheet(path: str, sheet_name: str, file_mtime_ns: int) -> pd.DataFrame:
-    # Load only the sheet required by the current page instead of reading
-    # the entire workbook on every navigation action.
-    del file_mtime_ns
-    frame = pd.read_excel(path, sheet_name=sheet_name, header=1, engine="openpyxl")
-    return clean_columns(frame)
+def normalize_status(series: pd.Series) -> pd.Series:
+    return (
+        series.fillna("")
+        .astype(str)
+        .str.strip()
+        .str.replace(r"\s+", " ", regex=True)
+    )
 
 
-def safe_num(value, default=0.0) -> float:
-    try:
-        if pd.isna(value):
-            return default
-        return float(value)
-    except (TypeError, ValueError):
-        return default
+@st.cache_data(show_spinner=False)
+def load_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame]:
+    excel = pd.ExcelFile(io.BytesIO(file_bytes))
+    required = {
+        "Customer_Volume": 2,
+        "Booking_Records": 1,
+        "Onboarded_Customers": 1,
+        "Improvement Proposals": 1,
+        "Customer_Feedback": 1,
+        "User Issues": 1,
+    }
+
+    missing = [s for s in required if s not in excel.sheet_names]
+    if missing:
+        raise ValueError("Missing sheet(s): " + ", ".join(missing))
+
+    data = {}
+    for sheet, header_row in required.items():
+        df = pd.read_excel(excel, sheet_name=sheet, header=header_row)
+        data[sheet] = drop_empty_rows(clean_columns(df))
+    return data
 
 
-def fmt_int(value) -> str:
-    return f"{safe_num(value):,.0f}"
+def read_source_file(uploaded_file):
+    if uploaded_file is not None:
+        return uploaded_file.getvalue(), uploaded_file.name
+
+    path = Path(DEFAULT_DATA_FILE)
+    if not path.exists():
+        st.error(
+            f"Data file not found. Please upload the Excel source file or place "
+            f"`{DEFAULT_DATA_FILE}` in the same GitHub repository as app.py."
+        )
+        st.stop()
+    return path.read_bytes(), path.name
 
 
-def fmt_pct(value) -> str:
-    v = safe_num(value)
-    if v > 1.5:
-        v /= 100
-    return f"{v:.1%}"
+def safe_divide(numerator, denominator):
+    if denominator in (0, None) or pd.isna(denominator):
+        return 0.0
+    return float(numerator) / float(denominator)
 
 
-def kpi(label: str, value: str, note: str = "") -> None:
+def format_percent(value, decimals=0):
+    return f"{value * 100:.{decimals}f}%"
+
+
+def kpi_card(label, value, note="", accent=""):
     st.markdown(
         f"""
-        <div class="kpi-card">
+        <div class="kpi-card {accent}">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
             <div class="kpi-note">{note}</div>
@@ -199,634 +263,803 @@ def kpi(label: str, value: str, note: str = "") -> None:
     )
 
 
-def style_fig(fig, height: int = 350):
-    fig.update_layout(
-        height=height,
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        legend=dict(
-            orientation="v",
-            x=1.02,
-            y=0.5,
-            xanchor="left",
-            yanchor="middle"
-        ),
-        margin=dict(
-            l=20,
-            r=170,
-            t=60,
-            b=20
+def prepare_data(data):
+    customer = data["Customer_Volume"].copy()
+    booking = data["Booking_Records"].copy()
+    onboarded = data["Onboarded_Customers"].copy()
+    proposals = data["Improvement Proposals"].copy()
+    feedback = data["Customer_Feedback"].copy()
+    issues = data["User Issues"].copy()
+
+    # Remove summary rows from customer source.
+    customer = customer[
+        pd.to_numeric(customer.get("No."), errors="coerce").notna()
+    ].copy()
+    customer["YVF Status"] = normalize_status(customer["YVF Status"])
+    customer["Customer Name"] = customer["Customer Name"].astype(str).str.strip()
+    customer["Total Volume"] = pd.to_numeric(
+        customer.get("Total Volume"), errors="coerce"
+    ).fillna(0)
+
+    booking["Booking Date"] = pd.to_datetime(
+        booking["Booking Date"], errors="coerce"
+    )
+    booking["Bookings"] = pd.to_numeric(
+        booking["Bookings"], errors="coerce"
+    ).fillna(0)
+    booking["Processing Time (min)"] = pd.to_numeric(
+        booking["Processing Time (min)"], errors="coerce"
+    )
+    booking["YVF Used"] = normalize_status(booking["YVF Used"])
+    booking["Status"] = normalize_status(booking["Status"])
+    booking["Customer Name"] = booking["Customer Name"].astype(str).str.strip()
+    booking["Transport Mode"] = booking["Transport Mode"].astype(str).str.strip()
+    booking["Month Start"] = booking["Booking Date"].dt.to_period("M").dt.to_timestamp()
+    booking["Month Label"] = booking["Booking Date"].dt.strftime("%b-%Y")
+
+    onboarded["YVF Booking Status"] = normalize_status(
+        onboarded["YVF Booking Status"]
+    )
+    onboarded["Customer Name"] = onboarded["Customer Name"].astype(str).str.strip()
+
+    for df, date_col in [
+        (proposals, "Proposal Date"),
+        (feedback, "Feedback Date"),
+        (issues, "Date"),
+    ]:
+        if date_col in df.columns:
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+
+    return customer, booking, onboarded, proposals, feedback, issues
+
+
+def calculate_metrics(customer, booking, onboarded):
+    eligible = int(
+        (
+            customer["YVF Status"].ne("")
+            & customer["YVF Status"].str.casefold().ne("declined")
+        ).sum()
+    )
+    total_onboarded = int(
+        customer["YVF Status"].str.startswith("Account Approved", na=False).sum()
+    )
+    new_onboarded = int(
+        customer["YVF Status"]
+        .str.contains(r"Account Approved.*2026FY", case=False, regex=True, na=False)
+        .sum()
+    )
+    active = int(
+        onboarded["YVF Booking Status"].str.casefold().eq("fully booking").sum()
+    )
+    pending = max(ONBOARDING_TARGET - new_onboarded, 0)
+
+    yvf_booking = booking[
+        booking["YVF Used"].str.casefold().eq("yes")
+    ].copy()
+    ytd_bookings = int(yvf_booking["Bookings"].sum())
+    avg_time = yvf_booking["Processing Time (min)"].mean()
+    avg_time = 0 if pd.isna(avg_time) else round(float(avg_time))
+
+    return {
+        "eligible": eligible,
+        "total_onboarded": total_onboarded,
+        "overall_rate": safe_divide(total_onboarded, eligible),
+        "new_onboarded": new_onboarded,
+        "new_rate": safe_divide(new_onboarded, eligible),
+        "active": active,
+        "pending": pending,
+        "ytd_bookings": ytd_bookings,
+        "avg_time": avg_time,
+        "onboarding_target": ONBOARDING_TARGET,
+        "booking_target": BOOKING_TARGET,
+        "onboarding_achievement": safe_divide(new_onboarded, ONBOARDING_TARGET),
+        "booking_achievement": safe_divide(ytd_bookings, BOOKING_TARGET),
+        "active_rate": safe_divide(active, total_onboarded),
+    }
+
+
+def gauge_chart(value, title, detail, color="#ed6b21"):
+    percentage = min(max(value * 100, 0), 100)
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=percentage,
+            number={"suffix": "%", "font": {"size": 34}},
+            title={"text": f"{title}<br><span style='font-size:0.75em'>{detail}</span>"},
+            gauge={
+                "axis": {"range": [0, 100], "tickwidth": 1},
+                "bar": {"color": color},
+                "bgcolor": "#e9eef5",
+                "borderwidth": 0,
+                "steps": [{"range": [0, 100], "color": "#e9eef5"}],
+            },
         )
     )
-
-    fig.update_xaxes(
-        showgrid=False,
-        linecolor="#E5E7EB"
+    fig.update_layout(
+        height=250,
+        margin=dict(l=25, r=25, t=70, b=15),
+        paper_bgcolor="white",
+        font={"color": "#172033"},
     )
-
-    fig.update_yaxes(
-        gridcolor="#F1F5F9",
-        zeroline=False
-    )
-
     return fig
 
 
-def normalize_dates(df: pd.DataFrame, columns: Iterable[str]) -> pd.DataFrame:
-    df = df.copy()
-    for col in columns:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
-    return df
-
-
-def require_columns(df: pd.DataFrame, sheet_name: str, columns: Iterable[str]) -> None:
-    """Stop the current page with a clear message when required columns are missing."""
-    missing_columns = [col for col in columns if col not in df.columns]
-    if missing_columns:
-        st.error(
-            f"Sheet '{sheet_name}' is missing required columns: "
-            + ", ".join(missing_columns)
-        )
-        st.stop()
-
-
-def excel_download_bytes(df: pd.DataFrame, sheet_name: str = "Report") -> bytes:
-    """Create an in-memory Excel file for Streamlit download buttons."""
-    output = BytesIO()
-    safe_sheet_name = sheet_name[:31] or "Report"
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name=safe_sheet_name)
-    return output.getvalue()
-
-
-def download_excel_button(
-    df: pd.DataFrame,
-    label: str,
-    file_name: str,
-    sheet_name: str,
-    key: str,
-) -> None:
-    st.download_button(
-        label=label,
-        data=excel_download_bytes(df, sheet_name),
-        file_name=file_name,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key=key,
-        use_container_width=False,
+def standard_chart_layout(fig, height=350):
+    fig.update_layout(
+        height=height,
+        margin=dict(l=15, r=15, t=45, b=25),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        font=dict(color="#172033"),
+        legend_title_text="",
+        xaxis_title="",
+        yaxis_title="",
+        hoverlabel=dict(bgcolor="white"),
     )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor="#e9eef5")
+    return fig
 
 
-def render_target_progress(actual: float, target: float) -> None:
-    achievement = actual / target if target > 0 else 0
-    display_pct = max(0.0, min(achievement, 1.0)) * 100
-    gap = max(target - actual, 0)
-    bar_color = GREEN if achievement >= 1 else ORANGE
-    target_text = fmt_int(target) if target > 0 else "Not set"
-    st.markdown(
-        f"""
-        <div class="target-card">
-            <div class="target-title">Booking Actual vs Target</div>
-            <div class="target-row">
-                <div class="target-actual">{fmt_int(actual)}</div>
-                <div class="target-meta">
-                    Target: <b>{target_text}</b><br>
-                    Achievement: <b>{fmt_pct(achievement)}</b><br>
-                    Remaining gap: <b>{fmt_int(gap)}</b>
-                </div>
-            </div>
-            <div class="progress-shell">
-                <div class="progress-fill" style="width:{display_pct:.1f}%;background:{bar_color};"></div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+# ============================================================
+# SIDEBAR
+# ============================================================
+st.sidebar.markdown("## 📊 YVF Dashboard")
+st.sidebar.caption("CS HAD")
 
-
-if not DATA_FILE.exists():
-    st.error("Source file not found: YVF_Adoption_Dashboard_Source.xlsx")
-    st.stop()
-
-file_mtime_ns = DATA_FILE.stat().st_mtime_ns
-
-try:
-    available_sheets = set(get_sheet_names(str(DATA_FILE), file_mtime_ns))
-except Exception as exc:
-    st.error(f"Unable to read the source workbook: {exc}")
-    st.stop()
-
-required = {
-    "Dashboard_Overview", "Customer_Volume", "Booking_Records", "Onboarded_Customers",
-    "Improvement Proposals", "Customer_Feedback", "User Issues"
-}
-missing = sorted(required.difference(available_sheets))
-if missing:
-    st.error("Missing source sheets: " + ", ".join(missing))
-    st.stop()
-
-st.sidebar.markdown("## 📊 CS HAD")
-st.sidebar.caption("YVF Adoption Dashboard")
-page = st.sidebar.radio(
-    "Navigation",
-    [
-        "🏠 Overview",
-        "👥 Adoption",
-        "📦 Booking Status",
-        "⚠️ User Issues",
-        "💡 Enhancement",
-        "⭐ Feedback",
-    ],
-    label_visibility="collapsed",
+uploaded_file = st.sidebar.file_uploader(
+    "Upload updated source data",
+    type=["xlsx"],
+    help="The workbook must retain the original sheet names.",
 )
 
-# The displayed time is based on the source file modification time. It remains
-# stable while navigating and changes automatically after the workbook updates.
-updated_at = datetime.fromtimestamp(
-    DATA_FILE.stat().st_mtime, ZoneInfo("Asia/Ho_Chi_Minh")
-).strftime("%d/%m/%Y %H:%M")
+page = st.sidebar.radio(
+    "Navigation",
+    NAV_ITEMS,
+    index=0,
+)
 
+st.sidebar.markdown("---")
+st.sidebar.caption(
+    "Update the Excel file in GitHub using the same filename, "
+    "or upload a new file directly here."
+)
+
+
+# ============================================================
+# LOAD DATA
+# ============================================================
+try:
+    source_bytes, source_name = read_source_file(uploaded_file)
+    raw_data = load_workbook(source_bytes)
+    customer, booking, onboarded, proposals, feedback, issues = prepare_data(raw_data)
+    metrics = calculate_metrics(customer, booking, onboarded)
+except Exception as exc:
+    st.error(f"Unable to load the source workbook: {exc}")
+    st.stop()
+
+latest_booking_date = booking["Booking Date"].max()
+data_date = (
+    latest_booking_date.strftime("%d %b %Y")
+    if pd.notna(latest_booking_date)
+    else "Not available"
+)
+
+st.markdown(f'<div class="dashboard-title">{APP_TITLE}</div>', unsafe_allow_html=True)
 st.markdown(
-    f"""
-    <div class="hero">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
-            <h1>{APP_TITLE}</h1>
-            <span style="font-size:13px;font-weight:600;white-space:nowrap;">
-                🕒 Data updated: {updated_at}
-            </span>
-        </div>
-    </div>
-    """,
+    f'<div class="dashboard-subtitle">Data source: {source_name} &nbsp;|&nbsp; '
+    f'Data updated through: {data_date}</div>',
     unsafe_allow_html=True,
 )
 
-# The overview sheet is lightweight and supplies common KPI values.
-overview = load_sheet(str(DATA_FILE), "Dashboard_Overview", file_mtime_ns)
-require_columns(
-    overview,
-    "Dashboard_Overview",
-    [
-        "Eligible Customers",
-        "Onboarded Customers",
-        "Pending Customers",
-        "Active YVF Customers",
-        "YVF Bookings",
-        "Monthly Booking Target",
-    ],
-)
-ov = overview.iloc[-1] if not overview.empty else pd.Series(dtype="object")
-eligible = safe_num(ov.get("Eligible Customers"))
-onboarded_count = safe_num(ov.get("Onboarded Customers"))
-adoption_rate = (
-    onboarded_count / eligible
-    if eligible > 0
-    else 0
-)
-pending = safe_num(ov.get("Pending Customers"))
-active = safe_num(ov.get("Active YVF Customers"))
-yvf_bookings = safe_num(ov.get("YVF Bookings"))
-avg_time = safe_num(ov.get("Avg. Booking Time (min/booking)"))
-new_customer_target = safe_num(ov.get("New Customer Target"))
-monthly_target = safe_num(ov.get("Monthly Booking Target"))
-booking_achievement = yvf_bookings / monthly_target if monthly_target else 0
 
-# Common Plotly settings reduce browser-side rendering work.
-PLOTLY_CONFIG = {
-    "displayModeBar": False,
-    "responsive": True,
-    "scrollZoom": False,
-}
-
-if page == "🏠 Overview":
-    onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
-    bookings = normalize_dates(load_sheet(str(DATA_FILE), "Booking_Records", file_mtime_ns), ["Booking Date"])
-    feedback = normalize_dates(load_sheet(str(DATA_FILE), "Customer_Feedback", file_mtime_ns), ["Feedback Date"])
-    issues = normalize_dates(load_sheet(str(DATA_FILE), "User Issues", file_mtime_ns), ["Date"])
-    require_columns(onboarded, "Onboarded_Customers", ["YVF Booking Status"])
-    require_columns(bookings, "Booking_Records", ["Customer Name", "Bookings"])
-    require_columns(issues, "User Issues", ["Status"])
-    cols = st.columns(4)
+# ============================================================
+# PAGE 1: OVERVIEW
+# ============================================================
+if page == "Overview":
+    cols = st.columns([1.05, 1.05, 1.05, 0.95, 0.95, 1.05, 1.2, 1.2])
     with cols[0]:
-        kpi("Eligible Customers", fmt_int(eligible))
+        kpi_card("Eligible Customers", f"{metrics['eligible']}")
     with cols[1]:
-        kpi("Onboarded Customers", fmt_int(onboarded_count))
+        kpi_card(
+            "Total Onboarded",
+            f"{metrics['total_onboarded']}",
+            f"Onboarding rate: {format_percent(metrics['overall_rate'])}",
+        )
     with cols[2]:
-        kpi("Adoption Rate", fmt_pct(adoption_rate))
+        kpi_card(
+            "New Onboarded (2026)",
+            f"{metrics['new_onboarded']}",
+            f"Onboarding rate: {format_percent(metrics['new_rate'])}",
+        )
     with cols[3]:
-        kpi("YTD Bookings", fmt_int(yvf_bookings))
-  
-    st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
-    progress_col, summary_col = st.columns([1.05, 1], gap="large")
-    with progress_col:
-        render_target_progress(yvf_bookings, monthly_target)
-    with summary_col:
-        high_priority_open = 0
-        if "Priority" in issues.columns:
-            high_priority_open = int(
-                (
-                    issues["Priority"].astype(str).str.strip().str.lower().eq("high")
-                    & ~issues["Status"].astype(str).str.strip().str.lower().eq("completed")
-                ).sum()
+        kpi_card("Active Customers", f"{metrics['active']}", accent="accent-green")
+    with cols[4]:
+        kpi_card("Pending Onboarding", f"{metrics['pending']}", accent="accent-amber")
+    with cols[5]:
+        kpi_card("YTD Bookings via YVF", f"{metrics['ytd_bookings']}")
+    with cols[6]:
+        kpi_card(
+            "Avg. Processing Time",
+            f"{metrics['avg_time']} min",
+            "Per booking",
+        )
+    with cols[7]:
+        kpi_card(
+            f"{FY_LABEL} Targets",
+            f"{metrics['onboarding_target']} / {metrics['booking_target']}",
+            "Customers / Bookings",
+            accent="accent-orange",
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    left, middle, right = st.columns([1.15, 1.2, 1.65])
+
+    with left:
+        st.markdown('<div class="section-title">ADOPTION FUNNEL</div>', unsafe_allow_html=True)
+        funnel_df = pd.DataFrame(
+            {
+                "Stage": [
+                    "Eligible Customers",
+                    "Total Onboarded",
+                    "Active Customers",
+                ],
+                "Value": [
+                    metrics["eligible"],
+                    metrics["total_onboarded"],
+                    metrics["active"],
+                ],
+            }
+        )
+        fig = go.Figure(
+            go.Funnel(
+                y=funnel_df["Stage"],
+                x=funnel_df["Value"],
+                textinfo="value+percent initial",
+                marker={"color": ["#083b82", "#0b63ce", "#42a5e8"]},
             )
-        summary_status = "on target" if booking_achievement >= 1 else "below target"
+        )
+        fig.update_layout(
+            height=330,
+            margin=dict(l=25, r=20, t=25, b=20),
+            paper_bgcolor="white",
+            font=dict(color="#172033"),
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    with middle:
+        st.markdown('<div class="section-title">PROGRESS TO TARGET</div>', unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            st.plotly_chart(
+                gauge_chart(
+                    metrics["onboarding_achievement"],
+                    "Onboarding Progress",
+                    f"{metrics['new_onboarded']} / {metrics['onboarding_target']} customers",
+                ),
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
+        with c2:
+            st.plotly_chart(
+                gauge_chart(
+                    metrics["booking_achievement"],
+                    "Booking Progress",
+                    f"{metrics['ytd_bookings']} / {metrics['booking_target']} bookings",
+                ),
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
+
+    with right:
+        st.markdown('<div class="section-title">BOOKING TREND (VIA YVF)</div>', unsafe_allow_html=True)
+        monthly = (
+            booking[booking["YVF Used"].str.casefold().eq("yes")]
+            .groupby(["Month Start", "Month Label"], as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Month Start")
+        )
+        if monthly.empty:
+            st.info("No booking data available.")
+        else:
+            fig = px.bar(
+                monthly,
+                x="Month Label",
+                y="Bookings",
+                text="Bookings",
+            )
+            fig.update_traces(marker_color="#0b63ce", textposition="outside")
+            monthly_target = BOOKING_TARGET / 12
+            fig.add_hline(
+                y=monthly_target,
+                line_dash="dash",
+                line_color="#ed6b21",
+                annotation_text=f"Target {monthly_target:.1f}/month",
+                annotation_position="top right",
+            )
+            standard_chart_layout(fig, 330)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1.25, 1.2, 1.55])
+
+    with c1:
+        st.markdown('<div class="section-title">TOP CUSTOMERS BY BOOKINGS</div>', unsafe_allow_html=True)
+        top_customers = (
+            booking[booking["YVF Used"].str.casefold().eq("yes")]
+            .groupby("Customer Name", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=True)
+            .tail(8)
+        )
+        if top_customers.empty:
+            st.info("No customer booking data available.")
+        else:
+            fig = px.bar(
+                top_customers,
+                x="Bookings",
+                y="Customer Name",
+                orientation="h",
+                text="Bookings",
+            )
+            fig.update_traces(marker_color="#0b63ce", textposition="outside")
+            standard_chart_layout(fig, 300)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    with c2:
+        st.markdown('<div class="section-title">PENDING ONBOARDING CUSTOMERS</div>', unsafe_allow_html=True)
+        pending_table = customer[
+            customer["YVF Status"].isin(["In Progress", "Not Started"])
+        ][["Customer Name", "Total Volume", "YVF Status"]].copy()
+        pending_table = pending_table.sort_values("Total Volume", ascending=False).head(8)
+        pending_table.columns = ["Customer", "Export HBL Volume", "Status"]
+        st.dataframe(
+            pending_table,
+            hide_index=True,
+            use_container_width=True,
+            height=300,
+        )
+
+    with c3:
+        st.markdown('<div class="section-title">KEY TAKEAWAYS</div>', unsafe_allow_html=True)
         st.markdown(
             f"""
-            <div class="target-card">
-                <div class="target-title">Executive Summary</div>
-                <div style="font-size:14px;line-height:1.7;color:#374151;">
-                    <b>{fmt_int(active)}</b> of <b>{fmt_int(eligible)}</b> eligible customers are active on YVF.
-                    Booking achievement is <b>{fmt_pct(booking_achievement)}</b> and currently
-                    <b>{summary_status}</b>.
-                    There are <b>{int((issues["Status"].astype(str).str.lower() == "open").sum())}</b>
-                    open issues, including <b>{high_priority_open}</b> high-priority item(s).
-                </div>
+            <div class="insight-box">
+                <b>{metrics['total_onboarded']} of {metrics['eligible']}</b> eligible customers
+                have been onboarded ({format_percent(metrics['overall_rate'])}).<br><br>
+                <b>{metrics['active']}</b> customers are actively using YVF,
+                equivalent to <b>{format_percent(metrics['active_rate'])}</b> of onboarded customers.<br><br>
+                <b>{metrics['ytd_bookings']}</b> bookings have been processed via YVF,
+                reaching <b>{format_percent(metrics['booking_achievement'], 1)}</b> of the FY2026 target.<br><br>
+                <b>{metrics['pending']}</b> additional customers are required to complete
+                the onboarding target; average processing time is
+                <b>{metrics['avg_time']} minutes per booking</b>.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
-    left, right = st.columns([1, 1], gap="large")
 
-    # =========================
-    # LEFT: BOOKING STATUS
-    # =========================
+# ============================================================
+# PAGE 2: CUSTOMER ADOPTION
+# ============================================================
+elif page == "Customer Adoption":
+    st.markdown("### Customer Adoption")
+
+    status_options = sorted(customer["YVF Status"].dropna().unique().tolist())
+    selected_status = st.multiselect(
+        "Filter by YVF status",
+        options=status_options,
+        default=status_options,
+    )
+
+    filtered_customer = customer[customer["YVF Status"].isin(selected_status)].copy()
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        kpi_card("Eligible Customers", metrics["eligible"])
+    with c2:
+        kpi_card("Total Onboarded", metrics["total_onboarded"])
+    with c3:
+        kpi_card("Active Customers", metrics["active"], accent="accent-green")
+    with c4:
+        kpi_card("Pending Target", metrics["pending"], accent="accent-amber")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    left, right = st.columns([1.2, 1])
+
     with left:
-        status_order = [
-            "Fully Booking",
-            "Trial Booking",
-            "Not Booking Yet"
-        ]
-
-        status_counts = (
-            onboarded["YVF Booking Status"]
-            .astype(str)
-            .str.strip()
-            .value_counts()
-            .reindex(status_order, fill_value=0)
-            .rename_axis("Status")
-            .reset_index(name="Customers")
+        st.markdown('<div class="section-title">CUSTOMER STATUS & VOLUME</div>', unsafe_allow_html=True)
+        display_cols = ["Customer Name", "Total Volume", "YVF Status"]
+        adoption_table = filtered_customer[display_cols].sort_values(
+            "Total Volume", ascending=False
         )
-
-        fig = px.bar(
-            status_counts,
-            x="Status",
-            y="Customers",
-            text="Customers",
-            title="Booking Status",
-            color="Status",
-            category_orders={"Status": status_order},
-            color_discrete_map={
-                "Fully Booking": GREEN,
-                "Trial Booking": ORANGE,
-                "Not Booking Yet": "#94A3B8",
+        st.dataframe(
+            adoption_table,
+            hide_index=True,
+            use_container_width=True,
+            height=460,
+            column_config={
+                "Total Volume": st.column_config.NumberColumn(
+                    "Export HBL Volume", format="%d"
+                ),
             },
         )
 
-        fig.update_traces(
-            textposition="outside"
-        )
-
-        fig.update_xaxes(
-            title=None,
-            showticklabels=False
-        )
-
-        fig.update_yaxes(
-            dtick=1,
-            rangemode="tozero"
-        )
-
-        fig.update_layout(
-            height=285,
-            bargap=0.08,
-            legend=dict(
-                orientation="v",
-                x=1.01,
-                y=0.5,
-                xanchor="left",
-                yanchor="middle"
-            ),
-            margin=dict(
-                l=20,
-                r=145,
-                t=50,
-                b=15
-            )
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config=PLOTLY_CONFIG,
-        )
-
-    # =========================
-    # RIGHT: BOOKINGS BY CUSTOMER
-    # =========================
     with right:
-        booking_by_customer = (
-            bookings
-            .groupby("Customer Name", as_index=False)["Bookings"]
+        st.markdown('<div class="section-title">CUSTOMERS BY YVF STATUS</div>', unsafe_allow_html=True)
+        status_count = (
+            filtered_customer.groupby("YVF Status", as_index=False)
+            .size()
+            .rename(columns={"size": "Customers"})
+            .sort_values("Customers", ascending=False)
+        )
+        fig = px.bar(
+            status_count,
+            x="Customers",
+            y="YVF Status",
+            orientation="h",
+            text="Customers",
+        )
+        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        standard_chart_layout(fig, 400)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">ONBOARDED CUSTOMER DETAILS</div>', unsafe_allow_html=True)
+
+    booking_by_customer = (
+        booking[booking["YVF Used"].str.casefold().eq("yes")]
+        .groupby("Customer Name", as_index=False)
+        .agg(
+            YTD_Bookings=("Bookings", "sum"),
+            Last_Booking=("Booking Date", "max"),
+            Avg_Processing_Time=("Processing Time (min)", "mean"),
+        )
+    )
+
+    onboard_detail = onboarded.merge(
+        booking_by_customer,
+        on="Customer Name",
+        how="left",
+    )
+    onboard_detail["YTD_Bookings"] = onboard_detail["YTD_Bookings"].fillna(0).astype(int)
+    onboard_detail["Avg_Processing_Time"] = onboard_detail[
+        "Avg_Processing_Time"
+    ].round(1)
+    onboard_detail = onboard_detail.rename(
+        columns={
+            "YVF Booking Status": "Booking Status",
+            "YTD_Bookings": "YTD Bookings",
+            "Last_Booking": "Last Booking",
+            "Avg_Processing_Time": "Avg. Processing Time",
+        }
+    )
+
+    st.dataframe(
+        onboard_detail[
+            [
+                "Customer Name",
+                "Transport Mode",
+                "Booking Status",
+                "YTD Bookings",
+                "Last Booking",
+                "Avg. Processing Time",
+                "Remarks",
+            ]
+        ],
+        hide_index=True,
+        use_container_width=True,
+        column_config={
+            "Last Booking": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+            "Avg. Processing Time": st.column_config.NumberColumn(
+                format="%.1f min"
+            ),
+        },
+    )
+
+
+# ============================================================
+# PAGE 3: BOOKING PERFORMANCE
+# ============================================================
+elif page == "Booking Performance":
+    st.markdown("### Booking Performance")
+
+    min_date = booking["Booking Date"].min()
+    max_date = booking["Booking Date"].max()
+
+    cfilter1, cfilter2, cfilter3 = st.columns([1.2, 1, 1])
+    with cfilter1:
+        date_range = st.date_input(
+            "Booking date range",
+            value=(min_date.date(), max_date.date()),
+            min_value=min_date.date(),
+            max_value=max_date.date(),
+        )
+    with cfilter2:
+        mode_options = sorted(booking["Transport Mode"].dropna().unique().tolist())
+        modes = st.multiselect(
+            "Transport mode",
+            mode_options,
+            default=mode_options,
+        )
+    with cfilter3:
+        customer_options = sorted(booking["Customer Name"].dropna().unique().tolist())
+        customers = st.multiselect(
+            "Customer",
+            customer_options,
+            default=customer_options,
+        )
+
+    filtered_booking = booking[
+        booking["Transport Mode"].isin(modes)
+        & booking["Customer Name"].isin(customers)
+        & booking["YVF Used"].str.casefold().eq("yes")
+    ].copy()
+
+    if isinstance(date_range, tuple) and len(date_range) == 2:
+        start_date, end_date = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
+        filtered_booking = filtered_booking[
+            filtered_booking["Booking Date"].between(start_date, end_date)
+        ]
+
+    total_bookings = int(filtered_booking["Bookings"].sum())
+    avg_processing = filtered_booking["Processing Time (min)"].mean()
+    avg_processing = 0 if pd.isna(avg_processing) else round(avg_processing, 1)
+    active_customers = int(filtered_booking["Customer Name"].nunique())
+    air_share = safe_divide(
+        filtered_booking.loc[
+            filtered_booking["Transport Mode"].str.casefold().eq("air"),
+            "Bookings",
+        ].sum(),
+        total_bookings,
+    )
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        kpi_card("Bookings in Selection", total_bookings)
+    with c2:
+        kpi_card("Active Customers", active_customers, accent="accent-green")
+    with c3:
+        kpi_card("Avg. Processing Time", f"{avg_processing:.1f} min")
+    with c4:
+        kpi_card("Air Booking Share", format_percent(air_share))
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    left, right = st.columns([1.55, 1])
+
+    with left:
+        st.markdown('<div class="section-title">BOOKING TREND BY DATE</div>', unsafe_allow_html=True)
+        daily = (
+            filtered_booking.groupby("Booking Date", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Booking Date")
+        )
+        fig = px.bar(daily, x="Booking Date", y="Bookings", text="Bookings")
+        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        standard_chart_layout(fig, 360)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    with right:
+        st.markdown('<div class="section-title">BOOKINGS BY MODE</div>', unsafe_allow_html=True)
+        by_mode = (
+            filtered_booking.groupby("Transport Mode", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=False)
+        )
+        fig = px.pie(
+            by_mode,
+            names="Transport Mode",
+            values="Bookings",
+            hole=0.55,
+        )
+        fig.update_traces(textposition="inside", textinfo="label+percent")
+        fig.update_layout(
+            height=360,
+            margin=dict(l=20, r=20, t=35, b=20),
+            paper_bgcolor="white",
+            showlegend=False,
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    left, right = st.columns(2)
+
+    with left:
+        st.markdown('<div class="section-title">BOOKINGS BY CUSTOMER</div>', unsafe_allow_html=True)
+        by_customer = (
+            filtered_booking.groupby("Customer Name", as_index=False)["Bookings"]
             .sum()
             .sort_values("Bookings", ascending=True)
         )
-
         fig = px.bar(
-            booking_by_customer,
+            by_customer,
             x="Bookings",
             y="Customer Name",
             orientation="h",
             text="Bookings",
-            title="YVF Bookings by Customer",
-            color_discrete_sequence=[BLUE]
         )
+        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        standard_chart_layout(fig, 330)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-        fig.update_traces(
-            textposition="outside",
-            cliponaxis=False
+    with right:
+        st.markdown('<div class="section-title">PROCESSING TIME BY DATE</div>', unsafe_allow_html=True)
+        processing = (
+            filtered_booking.groupby("Booking Date", as_index=False)[
+                "Processing Time (min)"
+            ]
+            .mean()
+            .sort_values("Booking Date")
         )
-
-        max_customer_booking = (
-            safe_num(booking_by_customer["Bookings"].max())
-            if not booking_by_customer.empty
-            else 0
+        fig = px.line(
+            processing,
+            x="Booking Date",
+            y="Processing Time (min)",
+            markers=True,
         )
+        fig.update_traces(line_color="#ed6b21", marker_color="#ed6b21")
+        standard_chart_layout(fig, 330)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-        fig.update_xaxes(
-            title=None,
-            range=[0, max_customer_booking * 1.18] if max_customer_booking > 0 else [0, 1],
-            showgrid=True,
-            gridcolor="#F1F5F9",
-            linecolor="#E5E7EB"
-        )
-
-        fig.update_yaxes(
-            title=None,
-            gridcolor="#F1F5F9",
-            zeroline=False
-        )
-
-        fig.update_layout(
-            height=285,
-            paper_bgcolor="white",
-            plot_bgcolor="white",
-            showlegend=False,
-            bargap=0.22,
-            margin=dict(
-                l=25,
-                r=70,
-                t=50,
-                b=15
-            )
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config=PLOTLY_CONFIG,
-        )
-
-    # =========================
-    # MANAGEMENT SNAPSHOT
-    # =========================
-    st.markdown(
-        "<div style='height:20px;'></div>",
-        unsafe_allow_html=True,
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">BOOKING RECORDS</div>', unsafe_allow_html=True)
+    st.dataframe(
+        filtered_booking[
+            [
+                "Booking Date",
+                "Customer Name",
+                "Transport Mode",
+                "Bookings",
+                "Processing Time (min)",
+                "Status",
+                "Handled By",
+                "Remarks",
+            ]
+        ].sort_values("Booking Date", ascending=False),
+        hide_index=True,
+        use_container_width=True,
+        column_config={
+            "Booking Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+            "Processing Time (min)": st.column_config.NumberColumn(format="%.1f"),
+        },
     )
+
+
+# ============================================================
+# PAGE 4: ISSUES & IMPROVEMENT
+# ============================================================
+else:
+    st.markdown("### Issues & Improvement")
 
     open_issues = int(
-        (
-            issues["Status"]
-            .astype(str)
-            .str.lower()
-            == "open"
-        ).sum()
+        issues["Status"].fillna("").astype(str).str.casefold().eq("open").sum()
     )
-
     completed_issues = int(
-        (
-            issues["Status"]
-            .astype(str)
-            .str.lower()
-            == "completed"
-        ).sum()
+        issues["Status"].fillna("").astype(str).str.casefold().eq("completed").sum()
+    )
+    open_proposals = int(
+        proposals["Status"].fillna("").astype(str).str.casefold().eq("open").sum()
+    )
+    completed_proposals = int(
+        proposals["Status"].fillna("").astype(str).str.casefold().eq("completed").sum()
     )
 
-    st.markdown(
-        '<div class="section-title">Management Details</div>',
-        unsafe_allow_html=True
-    )
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        kpi_card("Open User Issues", open_issues, accent="accent-red")
+    with c2:
+        kpi_card("Completed Issues", completed_issues, accent="accent-green")
+    with c3:
+        kpi_card("Open Proposals", open_proposals, accent="accent-amber")
+    with c4:
+        kpi_card("Completed Proposals", completed_proposals, accent="accent-green")
 
-    st.markdown(
-        f"""
-        <div class="insight">
-            <p><b>Adoption:</b> {fmt_int(active)} active customers out of {fmt_int(onboarded_count)} approved accounts.</p>
-            <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equivalent to {fmt_pct(booking_achievement)} of the monthly target.</p>
-            <p><b>Issues:</b> {open_issues} open and {completed_issues} completed.</p>
-            <p><b>Customer Feedback:</b> {len(feedback)} positive feedback records captured.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    
-elif page == "👥 Adoption":
-    onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
-    volume = load_sheet(str(DATA_FILE), "Customer_Volume", file_mtime_ns)
-    if "No." in volume.columns:
-        volume = volume[pd.to_numeric(volume["No."], errors="coerce").notna()].copy()
-    require_columns(onboarded, "Onboarded_Customers", ["YVF Booking Status"])
-    require_columns(volume, "Customer_Volume", ["YVF Status", "Total Volume"])
-    c = st.columns(4)
-    with c[0]: kpi("Eligible Customers", fmt_int(eligible), "Customers suitable for promotion")
-    with c[1]: kpi("Approved Accounts", fmt_int(len(onboarded)), "YVF accounts approved")
-    with c[2]: kpi("Fully Booking", fmt_int((onboarded["YVF Booking Status"].astype(str).str.strip() == "Fully Booking").sum()), "Using YVF as standard process")
-    with c[3]: kpi("Pending Customers", fmt_int(pending), "Pending onboarding")
-
-    left, right = st.columns([1, 1.2])
-    with left:
-        status_counts = onboarded["YVF Booking Status"].value_counts().reset_index()
-        status_counts.columns = ["Status", "Customers"]
-        fig = px.pie(status_counts, names="Status", values="Customers", hole=.58, title="Approved Accounts by Booking Status",
-                     color_discrete_sequence=[GREEN, ORANGE, "#94A3B8", BLUE])
-        fig.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-    with right:
-        status_volume = volume.groupby("YVF Status", as_index=False)["Total Volume"].sum().sort_values("Total Volume", ascending=False)
-        fig = px.bar(status_volume, x="YVF Status", y="Total Volume", text="Total Volume", title="Shipment Volume by YVF Status",
-                     color="YVF Status", color_discrete_sequence=[BLUE, ORANGE, GREEN, "#64748B", "#CBD5E1"])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-
-    st.markdown('<div class="section-title">Approved Customer Accounts</div>', unsafe_allow_html=True)
-    st.dataframe(onboarded, hide_index=True, use_container_width=True, height=340)
-    download_excel_button(
-        onboarded,
-        "⬇️ Download Customer Accounts",
-        "YVF_Approved_Customer_Accounts.xlsx",
-        "Customer Accounts",
-        "download_adoption",
-    )
-
-elif page == "📦 Booking Status":
-    bookings = normalize_dates(load_sheet(str(DATA_FILE), "Booking_Records", file_mtime_ns), ["Booking Date"])
-    require_columns(
-        bookings,
-        "Booking_Records",
-        [
-            "Booking Date", "Month", "Bookings", "Processing Time (min)",
-            "Status", "Customer Name", "Transport Mode", "Handled By"
-        ],
-    )
-    month_options = sorted(bookings["Month"].dropna().astype(str).unique().tolist())
-    selected_months = st.multiselect("Month", month_options, default=month_options)
-    filtered = bookings[bookings["Month"].astype(str).isin(selected_months)] if selected_months else bookings.iloc[0:0]
-
-    total_bookings = safe_num(filtered["Bookings"].sum())
-    weighted_time = (filtered["Bookings"] * filtered["Processing Time (min)"]).sum() / total_bookings if total_bookings else 0
-    c = st.columns(4)
-    with c[0]: kpi("Bookings", fmt_int(total_bookings), "Selected period")
-    with c[1]: kpi("Customers", fmt_int(filtered["Customer Name"].nunique()), "Customers with bookings")
-    with c[2]: kpi("Avg. Processing Time", f"{weighted_time:.1f} min", "Weighted by booking volume")
-    with c[3]: kpi("Completed Rate", fmt_pct((filtered["Status"] == "Completed").mean() if len(filtered) else 0), "Booking records completed")
-
-    st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
-    render_target_progress(total_bookings, monthly_target)
-
-    left, right = st.columns([1.25, 1])
-    with left:
-        daily = filtered.groupby("Booking Date", as_index=False)["Bookings"].sum().sort_values("Booking Date")
-        fig = px.line(daily, x="Booking Date", y="Bookings", markers=True, title="Daily YVF Booking Trend", color_discrete_sequence=[BLUE])
-        fig.update_traces(line=dict(width=3), marker=dict(size=8))
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-    with right:
-        by_mode = filtered.groupby("Transport Mode", as_index=False)["Bookings"].sum()
-        fig = px.pie(by_mode, names="Transport Mode", values="Bookings", hole=.55, title="Bookings by Transport Mode", color_discrete_sequence=[BLUE, ORANGE, GREEN])
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-
+    st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns(2)
+
     with left:
-        by_customer = filtered.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=False)
-        fig = px.bar(by_customer, x="Customer Name", y="Bookings", text="Bookings", title="Bookings by Customer", color_discrete_sequence=[ORANGE])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
+        st.markdown('<div class="section-title">USER ISSUES BY CATEGORY</div>', unsafe_allow_html=True)
+        issue_category = (
+            issues.groupby("Category", as_index=False)
+            .size()
+            .rename(columns={"size": "Issues"})
+            .sort_values("Issues", ascending=True)
+        )
+        fig = px.bar(
+            issue_category,
+            x="Issues",
+            y="Category",
+            orientation="h",
+            text="Issues",
+        )
+        fig.update_traces(marker_color="#ed6b21", textposition="outside")
+        standard_chart_layout(fig, 300)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
     with right:
-        by_handler = filtered.groupby("Handled By", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=False)
-        fig = px.bar(by_handler, x="Handled By", y="Bookings", text="Bookings", title="Bookings by Handler", color_discrete_sequence=[BLUE])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
+        st.markdown('<div class="section-title">PROPOSALS BY PRIORITY</div>', unsafe_allow_html=True)
+        proposal_priority = (
+            proposals.groupby("Priority", as_index=False)
+            .size()
+            .rename(columns={"size": "Proposals"})
+        )
+        fig = px.pie(
+            proposal_priority,
+            names="Priority",
+            values="Proposals",
+            hole=0.55,
+        )
+        fig.update_traces(textinfo="label+value")
+        fig.update_layout(
+            height=300,
+            margin=dict(l=20, r=20, t=35, b=20),
+            paper_bgcolor="white",
+            showlegend=False,
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    display = filtered.copy()
-    display["Booking Date"] = display["Booking Date"].dt.strftime("%d-%b-%Y")
-    st.markdown('<div class="section-title">Booking Details</div>', unsafe_allow_html=True)
-    st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=360)
-    download_excel_button(
-        display,
-        "⬇️ Download Booking Details",
-        "YVF_Booking_Details.xlsx",
-        "Booking Details",
-        "download_bookings",
+    st.markdown("<br>", unsafe_allow_html=True)
+    tab1, tab2, tab3 = st.tabs(
+        ["User Issues", "Improvement Proposals", "Positive Feedback"]
     )
 
-elif page == "⚠️ User Issues":
-    issues = normalize_dates(load_sheet(str(DATA_FILE), "User Issues", file_mtime_ns), ["Date"])
-    require_columns(issues, "User Issues", ["Date", "Status", "Category"])
-    status_filter = st.multiselect("Status", sorted(issues["Status"].dropna().unique()), default=sorted(issues["Status"].dropna().unique()))
-    filtered = issues[issues["Status"].isin(status_filter)] if status_filter else issues.iloc[0:0]
-    c = st.columns(4)
-    with c[0]: kpi("Total Issues", fmt_int(len(issues)), "All recorded issues")
-    with c[1]: kpi("Open", fmt_int((issues["Status"] == "Open").sum()), "Require follow-up")
-    with c[2]: kpi("Completed", fmt_int((issues["Status"] == "Completed").sum()), "Resolved issues")
-    with c[3]: kpi("Resolution Rate", fmt_pct((issues["Status"] == "Completed").mean()), "Completed / total")
+    with tab1:
+        st.dataframe(
+            issues[
+                ["Date", "Customer", "Issue", "Category", "Status"]
+            ].sort_values(["Status", "Date"], ascending=[False, False]),
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+                "Issue": st.column_config.TextColumn(width="large"),
+            },
+        )
 
-    left, right = st.columns(2)
-    with left:
-        cat = issues["Category"].value_counts().reset_index(); cat.columns=["Category","Issues"]
-        fig = px.bar(cat, x="Category", y="Issues", text="Issues", title="Issues by Category", color_discrete_sequence=[ORANGE])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-    with right:
-        stat = issues["Status"].value_counts().reset_index(); stat.columns=["Status","Issues"]
-        fig = px.pie(stat, names="Status", values="Issues", hole=.58, title="Issue Resolution Status",
-                     color="Status", color_discrete_map={"Open": RED, "In Progress": ORANGE, "Completed": GREEN})
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
+    with tab2:
+        st.dataframe(
+            proposals[
+                [
+                    "Proposal Date",
+                    "Submitted By",
+                    "Category",
+                    "Module",
+                    "Improvement Proposal",
+                    "Priority",
+                    "Status",
+                ]
+            ].sort_values(["Status", "Priority"], ascending=[False, True]),
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "Proposal Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+                "Improvement Proposal": st.column_config.TextColumn(width="large"),
+            },
+        )
 
-    display = filtered.copy(); display["Date"] = display["Date"].dt.strftime("%d-%b-%Y")
-    st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=380)
-    download_excel_button(
-        display,
-        "⬇️ Download User Issues",
-        "YVF_User_Issues.xlsx",
-        "User Issues",
-        "download_issues",
-    )
+    with tab3:
+        st.dataframe(
+            feedback[
+                [
+                    "Feedback Date",
+                    "Customer",
+                    "Positive Feedback",
+                    "Category",
+                    "Business Value",
+                ]
+            ].sort_values("Feedback Date", ascending=False),
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "Feedback Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+                "Positive Feedback": st.column_config.TextColumn(width="large"),
+            },
+        )
 
-elif page == "💡 Enhancement":
-    proposals = normalize_dates(load_sheet(str(DATA_FILE), "Improvement Proposals", file_mtime_ns), ["Proposal Date"])
-    require_columns(
-        proposals,
-        "Improvement Proposals",
-        ["Proposal Date", "Status", "Priority", "Category"],
-    )
-    c = st.columns(4)
-    with c[0]: kpi("Total Proposals", fmt_int(len(proposals)), "All improvement ideas")
-    with c[1]: kpi("Open", fmt_int((proposals["Status"] == "Open").sum()), "Awaiting action")
-    with c[2]: kpi("Completed", fmt_int((proposals["Status"] == "Completed").sum()), "Implemented or closed")
-    with c[3]: kpi("High Priority", fmt_int((proposals["Priority"] == "High").sum()), "Management attention")
 
-    left, right = st.columns(2)
-    with left:
-        cat = proposals["Category"].value_counts().reset_index(); cat.columns=["Category","Proposals"]
-        fig = px.bar(cat, x="Category", y="Proposals", text="Proposals", title="Proposals by Category", color_discrete_sequence=[BLUE])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-    with right:
-        stat = proposals["Status"].value_counts().reset_index(); stat.columns=["Status","Proposals"]
-        fig = px.pie(stat, names="Status", values="Proposals", hole=.58, title="Proposal Status",
-                     color="Status", color_discrete_map={"Open": RED, "In Progress": ORANGE, "Completed": GREEN})
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
-
-    display = proposals.copy(); display["Proposal Date"] = display["Proposal Date"].dt.strftime("%d-%b-%Y")
-    st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=380)
-    download_excel_button(
-        display,
-        "⬇️ Download Improvement Proposals",
-        "YVF_Improvement_Proposals.xlsx",
-        "Improvement Proposals",
-        "download_proposals",
-    )
-
-elif page == "⭐ Feedback":
-    feedback = normalize_dates(load_sheet(str(DATA_FILE), "Customer_Feedback", file_mtime_ns), ["Feedback Date"])
-    require_columns(
-        feedback,
-        "Customer_Feedback",
-        ["Feedback Date", "Customer", "Category", "Positive Feedback", "Business Value"],
-    )
-    c = st.columns(4)
-    with c[0]: kpi("Positive Feedback", fmt_int(len(feedback)), "Recorded customer comments")
-    with c[1]: kpi("Customers", fmt_int(feedback["Customer"].nunique()), "Customers providing feedback")
-    with c[2]: kpi("Feedback Categories", fmt_int(feedback["Category"].nunique()), "Experience themes")
-    with c[3]: kpi("Latest Feedback", feedback["Feedback Date"].max().strftime("%d-%b-%Y") if feedback["Feedback Date"].notna().any() else "–", "Most recent record")
-
-    cat = feedback["Category"].value_counts().reset_index(); cat.columns=["Category","Feedback"]
-    fig = px.bar(cat, x="Category", y="Feedback", text="Feedback", title="Positive Feedback by Category", color_discrete_sequence=[GREEN])
-    fig.update_traces(textposition="outside")
-    st.plotly_chart(style_fig(fig, 300), use_container_width=True, config=PLOTLY_CONFIG)
-
-    st.markdown('<div class="section-title">Customer Highlights</div>', unsafe_allow_html=True)
-    cards = st.columns(min(3, max(1, len(feedback))))
-    for idx, (_, row) in enumerate(feedback.head(3).iterrows()):
-        with cards[idx]:
-            date_text = row["Feedback Date"].strftime("%d-%b-%Y") if pd.notna(row["Feedback Date"]) else ""
-            st.markdown(
-                f'<div class="quote-card"><div class="quote">“{row["Positive Feedback"]}”</div>'
-                f'<div class="quote-meta">{row["Customer"]} · {row["Category"]} · {date_text}</div>'
-                f'<div class="small-muted">Business value: {row["Business Value"]}</div></div>',
-                unsafe_allow_html=True,
-            )
-
-    display = feedback.copy(); display["Feedback Date"] = display["Feedback Date"].dt.strftime("%d-%b-%Y")
-    st.markdown('<div class="section-title">Feedback Records</div>', unsafe_allow_html=True)
-    st.dataframe(display, hide_index=True, use_container_width=True, height=300)
+st.markdown(
+    '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
+    'Metrics are calculated directly from the uploaded Excel workbook.</div>',
+    unsafe_allow_html=True,
+)
