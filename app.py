@@ -339,36 +339,22 @@ if page == "🏠 Overview":
                 "Not Booking Yet": "#9AA9B6",
             },
         )
-        fig.update_layout(
-    legend=dict(
-        orientation="v",
-        x=1.02,
-        y=0.5,
-        xanchor="left",
-        yanchor="middle",
-        font=dict(size=14),
-    )
+        fig.update_xaxes(title=None)
+        fig.update_traces(textposition="outside")
+        fig.update_xaxes(
+    showticklabels=False
 )
-
-fig.update_xaxes(
-    title=None,
-    showticklabels=False,
-)
-
-fig.update_traces(
-    textposition="outside"
-)
-
-fig.update_yaxes(
-    dtick=1,
-    rangemode="tozero",
-)
-
-st.plotly_chart(
-    style_fig(fig),
-    use_container_width=True,
-    config=PLOTLY_CONFIG,
-)
+        
+        fig.update_yaxes(
+            dtick=1,
+            rangemode="tozero"
+        )
+        
+        st.plotly_chart(
+            style_fig(fig),
+            use_container_width=True,
+            config=PLOTLY_CONFIG,
+        )
 
     c1, c2 = st.columns([1.25, 1])
     with c1:
