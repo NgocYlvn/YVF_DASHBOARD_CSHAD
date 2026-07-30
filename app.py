@@ -64,12 +64,12 @@ st.markdown(
     }
 
     [data-testid="stHeader"] {
-        height: 2.75rem;
+        height: 3.25rem;
         background: var(--page);
     }
 
     [data-testid="stToolbar"] {
-        top: 0.25rem;
+        top: 0.35rem;
     }
 
     [data-testid="stSidebar"] {
@@ -86,14 +86,13 @@ st.markdown(
 
     .block-container {
         max-width: 1600px;
-        padding-top: 0.7rem;
+        padding-top: 1.65rem;
         padding-bottom: 2rem;
     }
 
     .dashboard-title {
         display: block;
-        position: relative;
-        z-index: 5;
+        position: static;
         font-size: 1.9rem;
         line-height: 1.15;
         font-weight: 800;
@@ -102,7 +101,7 @@ st.markdown(
         filter: none !important;
         text-shadow: none !important;
         -webkit-text-fill-color: #083B82 !important;
-        margin: 0 0 0.18rem 0;
+        margin: 0 0 0.35rem 0;
         letter-spacing: -0.02em;
     }
 
@@ -530,6 +529,7 @@ data_date = (
     else "Not available"
 )
 
+st.markdown("<div style='height:0.15rem'></div>", unsafe_allow_html=True)
 st.markdown(
     f'<div class="dashboard-title">{APP_TITLE}</div>',
     unsafe_allow_html=True,
@@ -1141,6 +1141,6 @@ else:
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    'Data is calculated directly from the Excel workbook | Version 6.0</div>',
+    'Data is calculated directly from the Excel workbook | Version 6.1</div>',
     unsafe_allow_html=True,
 )
