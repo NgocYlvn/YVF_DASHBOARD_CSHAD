@@ -243,18 +243,21 @@ if page == "🏠 Overview":
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig), use_container_width=True)
     with right:
-        gauge = go.Figure(
+    gauge = go.Figure(
         go.Indicator(
             mode="gauge+number+delta",
             value=booking_achievement * 100,
+
             number={
                 "suffix": "%",
                 "font": {"size": 34}
             },
+
             delta={
                 "reference": 100,
                 "relative": False
             },
+
             gauge={
                 "axis": {
                     "range": [0, max(120, booking_achievement * 120)]
