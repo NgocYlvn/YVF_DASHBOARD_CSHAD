@@ -71,14 +71,24 @@ st.markdown(
         font-weight: 600;
     }
 
+    /* Keep Streamlit's top header from covering the dashboard title */
+    [data-testid="stHeader"] {
+        height: 2.2rem;
+        background: #f7f9fc;
+    }
+
+    [data-testid="stToolbar"] {
+        top: 0.15rem;
+    }
+
     .block-container {
         max-width: 1600px;
-        padding-top: 1.1rem;
+        padding-top: 0.35rem;
         padding-bottom: 2rem;
     }
 
     .dashboard-title {
-        font-size: 2rem;
+        font-size: 1.72rem;
         font-weight: 800;
         color: var(--navy);
         margin: 0 0 0.15rem 0;
@@ -87,8 +97,8 @@ st.markdown(
 
     .dashboard-subtitle {
         color: var(--muted);
-        font-size: 0.92rem;
-        margin-bottom: 1rem;
+        font-size: 0.82rem;
+        margin-bottom: 0.7rem;
     }
 
     .section-title {
@@ -104,21 +114,30 @@ st.markdown(
         background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 12px;
-        padding: 0.9rem 0.85rem;
-        min-height: 132px;
+        padding: 0.82rem 0.62rem;
+        height: 142px;
+        min-height: 142px;
+        max-height: 142px;
+        box-sizing: border-box;
+        overflow: hidden;
         box-shadow: 0 2px 10px rgba(28, 54, 89, 0.05);
     }
 
     .kpi-label {
         color: var(--navy);
-        font-size: 0.88rem;
+        font-size: 0.82rem;
         font-weight: 750;
-        line-height: 1.25;
-        min-height: 42px;
+        line-height: 1.2;
+        min-height: 46px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        text-align: center;
     }
 
     .kpi-value {
-        font-size: 2rem;
+        font-size: 1.78rem;
+        text-align: center;
         font-weight: 800;
         line-height: 1.1;
         color: var(--blue);
@@ -127,8 +146,10 @@ st.markdown(
 
     .kpi-note {
         color: var(--muted);
-        font-size: 0.78rem;
-        margin-top: 0.35rem;
+        font-size: 0.71rem;
+        line-height: 1.15;
+        margin-top: 0.28rem;
+        text-align: center;
     }
 
     .accent-orange .kpi-value { color: var(--orange); }
@@ -227,40 +248,17 @@ def load_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame]:
 
 
 def read_source_file(uploaded_file):
-    """Load uploaded workbook or automatically find an Excel file in the app folder."""
     if uploaded_file is not None:
         return uploaded_file.getvalue(), uploaded_file.name
 
-    app_dir = Path(__file__).resolve().parent
-    preferred_path = app_dir / DEFAULT_DATA_FILE
-
-    if preferred_path.exists():
-        return preferred_path.read_bytes(), preferred_path.name
-
-    # Fallback: accept any .xlsx file uploaded to the same GitHub repository.
-    excel_files = sorted(
-        [
-            p for p in app_dir.glob("*.xlsx")
-            if not p.name.startswith("~$")
-        ],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-
-    if excel_files:
-        fallback_path = excel_files[0]
-        return fallback_path.read_bytes(), fallback_path.name
-
-    st.error(
-        "Không tìm thấy file dữ liệu Excel trong GitHub Repository. "
-        "Vui lòng upload file .xlsx vào cùng thư mục với app.py, "
-        "hoặc mở thanh bên trái và chọn **Upload updated source data**."
-    )
-    st.info(
-        "Tên file khuyến nghị: `YVF_Adoption_Data.xlsx`. "
-        "Sau khi upload lên GitHub, vào Streamlit và chọn **Reboot app**."
-    )
-    st.stop()
+    path = Path(DEFAULT_DATA_FILE)
+    if not path.exists():
+        st.error(
+            f"Data file not found. Please upload the Excel source file or place "
+            f"`{DEFAULT_DATA_FILE}` in the same GitHub repository as app.py."
+        )
+        st.stop()
+    return path.read_bytes(), path.name
 
 
 def safe_divide(numerator, denominator):
@@ -387,11 +385,27 @@ def gauge_chart(value, title, detail, color="#ed6b21"):
         go.Indicator(
             mode="gauge+number",
             value=percentage,
-            number={"suffix": "%", "font": {"size": 34}},
-            title={"text": f"{title}<br><span style='font-size:0.75em'>{detail}</span>"},
+            number={
+                "suffix": "%",
+                "font": {"size": 29, "color": "#ed6b21"},
+            },
+            title={
+                "text": (
+                    f"<b>{title}</b>"
+                    f"<br><span style='font-size:11px;color:#667085'>{detail}</span>"
+                ),
+                "font": {"size": 14, "color": "#083b82"},
+            },
             gauge={
-                "axis": {"range": [0, 100], "tickwidth": 1},
-                "bar": {"color": color},
+                "shape": "angular",
+                "axis": {
+                    "range": [0, 100],
+                    "tickwidth": 1,
+                    "tickfont": {"size": 9},
+                    "tickvals": [0, 50, 100],
+                    "ticktext": ["0%", "50%", "100%"],
+                },
+                "bar": {"color": color, "thickness": 0.32},
                 "bgcolor": "#e9eef5",
                 "borderwidth": 0,
                 "steps": [{"range": [0, 100], "color": "#e9eef5"}],
@@ -399,8 +413,8 @@ def gauge_chart(value, title, detail, color="#ed6b21"):
         )
     )
     fig.update_layout(
-        height=250,
-        margin=dict(l=25, r=25, t=70, b=15),
+        height=225,
+        margin=dict(l=16, r=16, t=58, b=8),
         paper_bgcolor="white",
         font={"color": "#172033"},
     )
@@ -430,22 +444,12 @@ def standard_chart_layout(fig, height=350):
 st.sidebar.markdown("## 📊 YVF Dashboard")
 st.sidebar.caption("CS HAD")
 
-uploaded_file = st.sidebar.file_uploader(
-    "Upload updated source data",
-    type=["xlsx"],
-    help="The workbook must retain the original sheet names.",
-)
+uploaded_file = None
 
 page = st.sidebar.radio(
     "Navigation",
     NAV_ITEMS,
     index=0,
-)
-
-st.sidebar.markdown("---")
-st.sidebar.caption(
-    "Update the Excel file in GitHub using the same filename, "
-    "or upload a new file directly here."
 )
 
 
@@ -480,7 +484,8 @@ st.markdown(
 # PAGE 1: OVERVIEW
 # ============================================================
 if page == "Overview":
-    cols = st.columns([1.05, 1.05, 1.05, 0.95, 0.95, 1.05, 1.2, 1.2])
+    # Equal-width KPI cards
+    cols = st.columns(8, gap="small")
     with cols[0]:
         kpi_card("Eligible Customers", f"{metrics['eligible']}")
     with cols[1]:
@@ -516,48 +521,16 @@ if page == "Overview":
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    left, middle, right = st.columns([1.15, 1.2, 1.65])
+    left, right = st.columns([1.0, 1.7], gap="medium")
 
     with left:
-        st.markdown('<div class="section-title">ADOPTION FUNNEL</div>', unsafe_allow_html=True)
-        funnel_df = pd.DataFrame(
-            {
-                "Stage": [
-                    "Eligible Customers",
-                    "Total Onboarded",
-                    "Active Customers",
-                ],
-                "Value": [
-                    metrics["eligible"],
-                    metrics["total_onboarded"],
-                    metrics["active"],
-                ],
-            }
-        )
-        fig = go.Figure(
-            go.Funnel(
-                y=funnel_df["Stage"],
-                x=funnel_df["Value"],
-                textinfo="value+percent initial",
-                marker={"color": ["#083b82", "#0b63ce", "#42a5e8"]},
-            )
-        )
-        fig.update_layout(
-            height=330,
-            margin=dict(l=25, r=20, t=25, b=20),
-            paper_bgcolor="white",
-            font=dict(color="#172033"),
-        )
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-    with middle:
         st.markdown('<div class="section-title">PROGRESS TO TARGET</div>', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
+        c1, c2 = st.columns(2, gap="small")
         with c1:
             st.plotly_chart(
                 gauge_chart(
                     metrics["onboarding_achievement"],
-                    "Onboarding Progress",
+                    "Onboarding",
                     f"{metrics['new_onboarded']} / {metrics['onboarding_target']} customers",
                 ),
                 use_container_width=True,
@@ -567,7 +540,7 @@ if page == "Overview":
             st.plotly_chart(
                 gauge_chart(
                     metrics["booking_achievement"],
-                    "Booking Progress",
+                    "Bookings",
                     f"{metrics['ytd_bookings']} / {metrics['booking_target']} bookings",
                 ),
                 use_container_width=True,
@@ -576,91 +549,105 @@ if page == "Overview":
 
     with right:
         st.markdown('<div class="section-title">BOOKING TREND (VIA YVF)</div>', unsafe_allow_html=True)
-        monthly = (
+
+        # Fixed FY2026 reporting months: Jul-2026 to Mar-2027.
+        month_axis = pd.date_range("2026-07-01", "2027-03-01", freq="MS")
+        monthly_actual = (
             booking[booking["YVF Used"].str.casefold().eq("yes")]
-            .groupby(["Month Start", "Month Label"], as_index=False)["Bookings"]
+            .groupby("Month Start", as_index=False)["Bookings"]
             .sum()
-            .sort_values("Month Start")
         )
-        if monthly.empty:
-            st.info("No booking data available.")
-        else:
-            fig = px.bar(
-                monthly,
-                x="Month Label",
-                y="Bookings",
-                text="Bookings",
-            )
-            fig.update_traces(marker_color="#0b63ce", textposition="outside")
-            monthly_target = BOOKING_TARGET / 12
-            fig.add_hline(
-                y=monthly_target,
-                line_dash="dash",
-                line_color="#ed6b21",
-                annotation_text=f"Target {monthly_target:.1f}/month",
-                annotation_position="top right",
-            )
-            standard_chart_layout(fig, 330)
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+        monthly = pd.DataFrame({"Month Start": month_axis}).merge(
+            monthly_actual,
+            on="Month Start",
+            how="left",
+        )
+        monthly["Bookings"] = monthly["Bookings"].fillna(0).astype(int)
+        monthly["Month Label"] = monthly["Month Start"].dt.strftime("%b %y")
+
+        fig = px.bar(
+            monthly,
+            x="Month Label",
+            y="Bookings",
+            text="Bookings",
+            category_orders={"Month Label": monthly["Month Label"].tolist()},
+        )
+        fig.update_traces(
+            marker_color="#0b63ce",
+            textposition="outside",
+            cliponaxis=False,
+        )
+        monthly_target = BOOKING_TARGET / 12
+        fig.add_hline(
+            y=monthly_target,
+            line_dash="dash",
+            line_color="#ed6b21",
+            annotation_text=f"Monthly target: {monthly_target:.1f}",
+            annotation_position="top right",
+        )
+        standard_chart_layout(fig, 300)
+        fig.update_xaxes(
+            categoryorder="array",
+            categoryarray=monthly["Month Label"].tolist(),
+            tickangle=0,
+            tickfont={"size": 11},
+        )
+        fig.update_yaxes(rangemode="tozero")
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     st.markdown("<br>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1.25, 1.2, 1.55])
+    st.markdown('<div class="section-title">BOOKINGS BY ONBOARDED CUSTOMER</div>', unsafe_allow_html=True)
 
-    with c1:
-        st.markdown('<div class="section-title">TOP CUSTOMERS BY BOOKINGS</div>', unsafe_allow_html=True)
-        top_customers = (
-            booking[booking["YVF Used"].str.casefold().eq("yes")]
-            .groupby("Customer Name", as_index=False)["Bookings"]
-            .sum()
-            .sort_values("Bookings", ascending=True)
-            .tail(8)
-        )
-        if top_customers.empty:
-            st.info("No customer booking data available.")
-        else:
-            fig = px.bar(
-                top_customers,
-                x="Bookings",
-                y="Customer Name",
-                orientation="h",
-                text="Bookings",
-            )
-            fig.update_traces(marker_color="#0b63ce", textposition="outside")
-            standard_chart_layout(fig, 300)
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    # Show every customer listed in Onboarded_Customers, including customers with zero bookings.
+    onboarded_names = (
+        onboarded[["Customer Name"]]
+        .dropna()
+        .assign(**{"Customer Name": lambda x: x["Customer Name"].astype(str).str.strip()})
+        .drop_duplicates()
+    )
+    booking_volume = (
+        booking[booking["YVF Used"].str.casefold().eq("yes")]
+        .groupby("Customer Name", as_index=False)["Bookings"]
+        .sum()
+    )
+    all_onboarded_booking = onboarded_names.merge(
+        booking_volume,
+        on="Customer Name",
+        how="left",
+    )
+    all_onboarded_booking["Bookings"] = (
+        all_onboarded_booking["Bookings"].fillna(0).astype(int)
+    )
+    all_onboarded_booking = all_onboarded_booking.sort_values(
+        ["Bookings", "Customer Name"],
+        ascending=[True, False],
+    )
 
-    with c2:
-        st.markdown('<div class="section-title">PENDING ONBOARDING CUSTOMERS</div>', unsafe_allow_html=True)
-        pending_table = customer[
-            customer["YVF Status"].isin(["In Progress", "Not Started"])
-        ][["Customer Name", "Total Volume", "YVF Status"]].copy()
-        pending_table = pending_table.sort_values("Total Volume", ascending=False).head(8)
-        pending_table.columns = ["Customer", "Export HBL Volume", "Status"]
-        st.dataframe(
-            pending_table,
-            hide_index=True,
-            use_container_width=True,
-            height=300,
+    if all_onboarded_booking.empty:
+        st.info("No onboarded customer data available.")
+    else:
+        chart_height = max(300, 44 * len(all_onboarded_booking))
+        fig = px.bar(
+            all_onboarded_booking,
+            x="Bookings",
+            y="Customer Name",
+            orientation="h",
+            text="Bookings",
         )
-
-    with c3:
-        st.markdown('<div class="section-title">KEY TAKEAWAYS</div>', unsafe_allow_html=True)
-        st.markdown(
-            f"""
-            <div class="insight-box">
-                <b>{metrics['total_onboarded']} of {metrics['eligible']}</b> eligible customers
-                have been onboarded ({format_percent(metrics['overall_rate'])}).<br><br>
-                <b>{metrics['active']}</b> customers are actively using YVF,
-                equivalent to <b>{format_percent(metrics['active_rate'])}</b> of onboarded customers.<br><br>
-                <b>{metrics['ytd_bookings']}</b> bookings have been processed via YVF,
-                reaching <b>{format_percent(metrics['booking_achievement'], 1)}</b> of the FY2026 target.<br><br>
-                <b>{metrics['pending']}</b> additional customers are required to complete
-                the onboarding target; average processing time is
-                <b>{metrics['avg_time']} minutes per booking</b>.
-            </div>
-            """,
-            unsafe_allow_html=True,
+        fig.update_traces(
+            marker_color="#0b63ce",
+            textposition="outside",
+            cliponaxis=False,
         )
+        standard_chart_layout(fig, chart_height)
+        fig.update_yaxes(
+            categoryorder="array",
+            categoryarray=all_onboarded_booking["Customer Name"].tolist(),
+            tickfont={"size": 11},
+            automargin=True,
+        )
+        fig.update_xaxes(rangemode="tozero")
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
 # ============================================================
