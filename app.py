@@ -334,6 +334,9 @@ if page == "🏠 Overview":
         )
         fig.update_xaxes(title=None)
         fig.update_traces(textposition="outside")
+        fig.update_xaxes(
+    showticklabels=False
+)
         
         fig.update_yaxes(
             dtick=1,
