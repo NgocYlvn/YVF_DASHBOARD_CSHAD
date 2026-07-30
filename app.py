@@ -314,14 +314,18 @@ if page == "🏠 Overview":
         "<div style='height:38px;'></div>",
         unsafe_allow_html=True,
     )
-    left, right = st.columns([1.12, 1], gap="large")
+    left, right = st.columns([1, 1], gap="large")
+
+    # =========================
+    # LEFT: BOOKING STATUS
+    # =========================
     with left:
         status_order = [
             "Fully Booking",
             "Trial Booking",
             "Not Booking Yet"
         ]
-        
+
         status_counts = (
             onboarded["YVF Booking Status"]
             .astype(str)
@@ -331,7 +335,7 @@ if page == "🏠 Overview":
             .rename_axis("Status")
             .reset_index(name="Customers")
         )
-        
+
         fig = px.bar(
             status_counts,
             x="Status",
@@ -346,53 +350,153 @@ if page == "🏠 Overview":
                 "Not Booking Yet": "#9AA9B6",
             },
         )
-        fig.update_xaxes(title=None)
-        fig.update_traces(textposition="outside", width=0.45
-)
+
+        fig.update_traces(
+            textposition="outside"
+        )
+
         fig.update_xaxes(
-    showticklabels=False
-)
-        
+            title=None,
+            showticklabels=False
+        )
+
         fig.update_yaxes(
             dtick=1,
             rangemode="tozero"
         )
-        
+
+        fig.update_layout(
+            bargap=0.08,
+            legend=dict(
+                orientation="v",
+                x=1.02,
+                y=0.5,
+                xanchor="left",
+                yanchor="middle"
+            ),
+            margin=dict(
+                l=20,
+                r=150,
+                t=45,
+                b=10
+            )
+        )
+
         st.plotly_chart(
-            style_fig(fig, 260),
+            style_fig(fig, 270),
             use_container_width=True,
             config=PLOTLY_CONFIG,
         )
-        fig.update_layout(
-    bargap=0.08,
-    margin=dict(l=20, r=170, t=45, b=10)
-)
 
-    c1, c2 = st.columns([1.25, 1])
-    with c1:
-        booking_by_customer = bookings.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=True)
-        fig = px.bar(booking_by_customer, x="Bookings", y="Customer Name", orientation="h", text="Bookings",
-                     title="YVF Bookings by Customer", color_discrete_sequence=[BLUE])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig, 260), use_container_width=True, config=PLOTLY_CONFIG)
-    with c2:
-        open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
-        completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
-        st.markdown('<div class="section-title">Management Snapshot</div>', unsafe_allow_html=True)
-        st.markdown(
-            f'''
-            <div class="insight">
-                <p><b>Adoption:</b> {fmt_int(active)} active customers out of {fmt_int(onboarded_count)} approved accounts.</p>
-                <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equivalent to {fmt_pct(booking_achievement)} of the monthly target.</p>
-                <p><b>Issues:</b> {open_issues} open and {completed_issues} completed.</p>
-                <p><b>Customer Feedback:</b> {len(feedback)} positive feedback records captured.</p>
-            </div>
-            ''',
-            unsafe_allow_html=True,
+    # =========================
+    # RIGHT: BOOKINGS BY CUSTOMER
+    # =========================
+    with right:
+        booking_by_customer = (
+            bookings
+            .groupby("Customer Name", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=True)
         )
-        latest = issues.sort_values("Date", ascending=False).head(4)[["Date", "Customer", "Issue", "Status"]].copy()
-        latest["Date"] = latest["Date"].dt.strftime("%d-%b-%Y")
-        st.dataframe(latest, hide_index=True, use_container_width=True, height=220)
+
+        fig = px.bar(
+            booking_by_customer,
+            x="Bookings",
+            y="Customer Name",
+            orientation="h",
+            text="Bookings",
+            title="YVF Bookings by Customer",
+            color_discrete_sequence=[BLUE]
+        )
+
+        fig.update_traces(
+            textposition="outside"
+        )
+
+        fig.update_xaxes(
+            title=None,
+            showgrid=True
+        )
+
+        fig.update_yaxes(
+            title=None
+        )
+
+        fig.update_layout(
+            showlegend=False,
+            bargap=0.22,
+            margin=dict(
+                l=20,
+                r=45,
+                t=45,
+                b=10
+            )
+        )
+
+        st.plotly_chart(
+            style_fig(fig, 270),
+            use_container_width=True,
+            config=PLOTLY_CONFIG,
+        )
+
+    # =========================
+    # MANAGEMENT SNAPSHOT
+    # =========================
+    st.markdown(
+        "<div style='height:20px;'></div>",
+        unsafe_allow_html=True,
+    )
+
+    open_issues = int(
+        (
+            issues["Status"]
+            .astype(str)
+            .str.lower()
+            == "open"
+        ).sum()
+    )
+
+    completed_issues = int(
+        (
+            issues["Status"]
+            .astype(str)
+            .str.lower()
+            == "completed"
+        ).sum()
+    )
+
+    st.markdown(
+        '<div class="section-title">Management Snapshot</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        f"""
+        <div class="insight">
+            <p><b>Adoption:</b> {fmt_int(active)} active customers out of {fmt_int(onboarded_count)} approved accounts.</p>
+            <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equivalent to {fmt_pct(booking_achievement)} of the monthly target.</p>
+            <p><b>Issues:</b> {open_issues} open and {completed_issues} completed.</p>
+            <p><b>Customer Feedback:</b> {len(feedback)} positive feedback records captured.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    latest = (
+        issues
+        .sort_values("Date", ascending=False)
+        .head(4)[["Date", "Customer", "Issue", "Status"]]
+        .copy()
+    )
+
+    latest["Date"] = latest["Date"].dt.strftime("%d-%b-%Y")
+
+    st.dataframe(
+        latest,
+        hide_index=True,
+        use_container_width=True,
+        height=220
+    )
 
 elif page == "👥 Adoption":
     onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
