@@ -41,78 +41,86 @@ st.markdown(
     """
     <style>
     :root {
-        --navy: #083b82;
-        --blue: #0b63ce;
-        --orange: #ed6b21;
-        --green: #169b62;
-        --amber: #f59e0b;
-        --red: #dc2626;
+        --navy: #083B82;
+        --blue: #0B63CE;
+        --orange: #ED6B21;
+        --green: #169B62;
+        --amber: #F59E0B;
+        --red: #DC2626;
         --text: #172033;
         --muted: #667085;
-        --line: #dbe4f0;
-        --panel: #ffffff;
-        --soft: #f6f9fd;
+        --line: #DCE5F0;
+        --panel: #FFFFFF;
+        --page: #F7F9FC;
+    }
+
+    html, body, [class*="css"] {
+        font-family: Arial, "Segoe UI", sans-serif;
     }
 
     .stApp {
-        background: #f7f9fc;
+        background: var(--page);
         color: var(--text);
     }
 
+    [data-testid="stHeader"] {
+        height: 2.75rem;
+        background: var(--page);
+    }
+
+    [data-testid="stToolbar"] {
+        top: 0.25rem;
+    }
+
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #073472 0%, #0b4d9b 100%);
+        background: linear-gradient(180deg, #073472 0%, #0B4D9B 100%);
     }
 
     [data-testid="stSidebar"] * {
-        color: white;
+        color: #FFFFFF;
     }
 
     [data-testid="stSidebar"] .stRadio label {
         font-weight: 600;
     }
 
-    /* Compact header without covering messages or the dashboard title */
-    [data-testid="stHeader"] {
-        height: 3rem;
-        background: rgba(247, 249, 252, 0.96);
-    }
-
-    [data-testid="stToolbar"] {
-        top: 0.35rem;
-    }
-
     .block-container {
         max-width: 1600px;
-        padding-top: 0.75rem;
+        padding-top: 0.7rem;
         padding-bottom: 2rem;
     }
 
-    div[data-testid="stAlert"] {
-        margin-top: 0.35rem;
-    }
-
     .dashboard-title {
-        font-size: 2rem;
+        display: block;
+        position: relative;
+        z-index: 5;
+        font-size: 1.9rem;
+        line-height: 1.15;
         font-weight: 800;
         color: #083B82 !important;
-        opacity: 2 !important;
+        opacity: 1 !important;
         filter: none !important;
         text-shadow: none !important;
         -webkit-text-fill-color: #083B82 !important;
-        margin: 0 0 0.2rem 0;
+        margin: 0 0 0.18rem 0;
         letter-spacing: -0.02em;
     }
 
     .dashboard-subtitle {
-        color: var(--muted);
+        display: block;
+        position: relative;
+        z-index: 5;
+        color: #667085 !important;
+        opacity: 1 !important;
         font-size: 0.82rem;
-        margin-bottom: 0.7rem;
+        line-height: 1.2;
+        margin: 0 0 0.75rem 0;
     }
 
     .section-title {
         background: var(--navy);
-        color: white;
-        padding: 0.55rem 0.85rem;
+        color: #FFFFFF;
+        padding: 0.52rem 0.8rem;
         border-radius: 10px 10px 0 0;
         font-weight: 750;
         margin-top: 0.25rem;
@@ -145,11 +153,11 @@ st.markdown(
 
     .kpi-value {
         font-size: 1.78rem;
-        text-align: center;
         font-weight: 800;
         line-height: 1.1;
         color: var(--blue);
         margin-top: 0.35rem;
+        text-align: center;
     }
 
     .kpi-note {
@@ -165,40 +173,19 @@ st.markdown(
     .accent-amber .kpi-value { color: var(--amber); }
     .accent-red .kpi-value { color: var(--red); }
 
-    .insight-box {
-        background: #ffffff;
-        border-left: 5px solid var(--orange);
-        border-radius: 10px;
-        padding: 0.9rem 1rem;
-        border-top: 1px solid var(--line);
-        border-right: 1px solid var(--line);
-        border-bottom: 1px solid var(--line);
-    }
-
-    .small-note {
-        font-size: 0.8rem;
-        color: var(--muted);
-    }
-
     div[data-testid="stDataFrame"] {
         border: 1px solid var(--line);
         border-radius: 10px;
         overflow: hidden;
     }
 
-    .status-open {
-        color: var(--red);
-        font-weight: 700;
-    }
-
-    .status-completed {
-        color: var(--green);
-        font-weight: 700;
+    div[data-testid="stAlert"] {
+        margin-top: 0.4rem;
     }
 
     .footer-note {
         color: var(--muted);
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         padding-top: 0.8rem;
     }
     </style>
@@ -1154,6 +1141,6 @@ else:
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    'Data is calculated directly from the Excel workbook | Version 5.0</div>',
+    'Data is calculated directly from the Excel workbook | Version 6.0</div>',
     unsafe_allow_html=True,
 )
