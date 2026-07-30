@@ -90,13 +90,21 @@ def clean_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.dropna(how="all")
 
 
-@st.cache_data(show_spinner=False)
-def load_data(path: str) -> Dict[str, pd.DataFrame]:
-    xlsx = pd.ExcelFile(path, engine="openpyxl")
-    result: Dict[str, pd.DataFrame] = {}
-    for sheet in xlsx.sheet_names:
-        result[sheet] = clean_columns(pd.read_excel(path, sheet_name=sheet, header=1, engine="openpyxl"))
-    return result
+@st.cache_data(show_spinner=False, max_entries=20)
+def get_sheet_names(path: str, file_mtime_ns: int) -> tuple[str, ...]:
+    # file_mtime_ns is intentionally included so the cache refreshes only
+    # when the source workbook actually changes.
+    del file_mtime_ns
+    return tuple(pd.ExcelFile(path, engine="openpyxl").sheet_names)
+
+
+@st.cache_data(show_spinner=False, max_entries=30)
+def load_sheet(path: str, sheet_name: str, file_mtime_ns: int) -> pd.DataFrame:
+    # Load only the sheet required by the current page instead of reading
+    # the entire workbook on every navigation action.
+    del file_mtime_ns
+    frame = pd.read_excel(path, sheet_name=sheet_name, header=1, engine="openpyxl")
+    return clean_columns(frame)
 
 
 def safe_num(value, default=0.0) -> float:
@@ -155,8 +163,10 @@ if not DATA_FILE.exists():
     st.error("Source file not found: YVF_Adoption_Dashboard_Source.xlsx")
     st.stop()
 
+file_mtime_ns = DATA_FILE.stat().st_mtime_ns
+
 try:
-    data = load_data(str(DATA_FILE))
+    available_sheets = set(get_sheet_names(str(DATA_FILE), file_mtime_ns))
 except Exception as exc:
     st.error(f"Unable to read the source workbook: {exc}")
     st.stop()
@@ -165,38 +175,39 @@ required = {
     "Dashboard_Overview", "Customer_Volume", "Booking_Records", "Onboarded_Customers",
     "Improvement Proposals", "Customer_Feedback", "User Issues"
 }
-missing = sorted(required.difference(data))
+missing = sorted(required.difference(available_sheets))
 if missing:
     st.error("Missing source sheets: " + ", ".join(missing))
     st.stop()
-
-overview = data["Dashboard_Overview"]
-volume = data["Customer_Volume"]
-bookings = normalize_dates(data["Booking_Records"], ["Booking Date"])
-onboarded = data["Onboarded_Customers"]
-proposals = normalize_dates(data["Improvement Proposals"], ["Proposal Date"])
-feedback = normalize_dates(data["Customer_Feedback"], ["Feedback Date"])
-issues = normalize_dates(data["User Issues"], ["Date"])
-
-if "No." in volume.columns:
-    volume = volume[pd.to_numeric(volume["No."], errors="coerce").notna()].copy()
 
 st.sidebar.markdown("## 📊 CS HAD")
 st.sidebar.caption("YVF Adoption Dashboard")
 page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Overview", "👥 Adoption", "📦 Booking Status", "⚠️ User Issues", "💡Enhancement", "⭐Feedback"],
+    [
+        "🏠 Overview",
+        "👥 Customer Adoption",
+        "📦 Booking Performance",
+        "⚠️ User Issues",
+        "💡 Improvement Proposals",
+        "⭐ Customer Feedback",
+    ],
     label_visibility="collapsed",
 )
 
-updated_at = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y %H:%M")
+# The displayed time is based on the source file modification time. It remains
+# stable while navigating and changes automatically after the workbook updates.
+updated_at = datetime.fromtimestamp(
+    DATA_FILE.stat().st_mtime, ZoneInfo("Asia/Ho_Chi_Minh")
+).strftime("%d/%m/%Y %H:%M")
+
 st.markdown(
     f"""
     <div class="hero">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
             <h1>{APP_TITLE}</h1>
             <span style="font-size:13px;font-weight:600;white-space:nowrap;">
-                🕒 Last updated: {updated_at}
+                🕒 Data updated: {updated_at}
             </span>
         </div>
     </div>
@@ -204,6 +215,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# The overview sheet is lightweight and supplies common KPI values.
+overview = load_sheet(str(DATA_FILE), "Dashboard_Overview", file_mtime_ns)
 ov = overview.iloc[-1] if not overview.empty else pd.Series(dtype="object")
 eligible = safe_num(ov.get("Eligible Customers"))
 total_hbl = safe_num(ov.get("Total Export HBLs"))
@@ -215,14 +228,21 @@ yvf_bookings = safe_num(ov.get("YVF Bookings"))
 avg_time = safe_num(ov.get("Avg. Booking Time (min/booking)"))
 new_customer_target = safe_num(ov.get("New Customer Target"))
 monthly_target = safe_num(ov.get("Monthly Booking Target"))
-source_adoption_rate = (
-    onboarded_count / eligible
-    if eligible > 0
-    else 0
-)
+source_adoption_rate = onboarded_count / eligible if eligible > 0 else 0
 booking_achievement = yvf_bookings / monthly_target if monthly_target else 0
 
+# Common Plotly settings reduce browser-side rendering work.
+PLOTLY_CONFIG = {
+    "displayModeBar": False,
+    "responsive": True,
+    "scrollZoom": False,
+}
+
 if page == "🏠 Overview":
+    onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
+    bookings = normalize_dates(load_sheet(str(DATA_FILE), "Booking_Records", file_mtime_ns), ["Booking Date"])
+    feedback = normalize_dates(load_sheet(str(DATA_FILE), "Customer_Feedback", file_mtime_ns), ["Feedback Date"])
+    issues = normalize_dates(load_sheet(str(DATA_FILE), "User Issues", file_mtime_ns), ["Date"])
     cols = st.columns(6)
     with cols[0]:
         kpi("Eligible Customers", fmt_int(eligible), "Target customer pool")
@@ -245,7 +265,7 @@ if page == "🏠 Overview":
         fig = px.bar(status_counts, x="Status", y="Customers", text="Customers", title="Approved Account Adoption Status",
                      color="Status", color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
     with right:
         gauge = go.Figure(go.Indicator(
             mode="gauge+number+delta",
@@ -260,7 +280,7 @@ if page == "🏠 Overview":
                 "threshold": {"line": {"color": GREEN, "width": 4}, "value": 100},
             },
         ))
-        st.plotly_chart(style_fig(gauge), use_container_width=True)
+        st.plotly_chart(style_fig(gauge), use_container_width=True, config=PLOTLY_CONFIG)
 
     c1, c2 = st.columns([1.25, 1])
     with c1:
@@ -268,7 +288,7 @@ if page == "🏠 Overview":
         fig = px.bar(booking_by_customer, x="Bookings", y="Customer Name", orientation="h", text="Bookings",
                      title="YVF Bookings by Customer", color_discrete_sequence=[BLUE])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig, 330), use_container_width=True)
+        st.plotly_chart(style_fig(fig, 330), use_container_width=True, config=PLOTLY_CONFIG)
     with c2:
         open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
         completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
@@ -289,6 +309,10 @@ if page == "🏠 Overview":
         st.dataframe(latest, hide_index=True, use_container_width=True, height=220)
 
 elif page == "👥 Customer Adoption":
+    onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
+    volume = load_sheet(str(DATA_FILE), "Customer_Volume", file_mtime_ns)
+    if "No." in volume.columns:
+        volume = volume[pd.to_numeric(volume["No."], errors="coerce").notna()].copy()
     c = st.columns(4)
     with c[0]: kpi("Eligible Customers", fmt_int(eligible), "Customers suitable for promotion")
     with c[1]: kpi("Approved Accounts", fmt_int(len(onboarded)), "YVF accounts approved")
@@ -302,18 +326,19 @@ elif page == "👥 Customer Adoption":
         fig = px.pie(status_counts, names="Status", values="Customers", hole=.58, title="Approved Accounts by Booking Status",
                      color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6", BLUE])
         fig.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
     with right:
         status_volume = volume.groupby("YVF Status", as_index=False)["Total Volume"].sum().sort_values("Total Volume", ascending=False)
         fig = px.bar(status_volume, x="YVF Status", y="Total Volume", text="Total Volume", title="Shipment Volume by YVF Status",
                      color="YVF Status", color_discrete_sequence=[BLUE, ORANGE, GREEN, "#8394A5", "#B0BBC5"])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
 
     st.markdown('<div class="section-title">Approved Customer Accounts</div>', unsafe_allow_html=True)
     st.dataframe(onboarded, hide_index=True, use_container_width=True, height=340)
 
 elif page == "📦 Booking Performance":
+    bookings = normalize_dates(load_sheet(str(DATA_FILE), "Booking_Records", file_mtime_ns), ["Booking Date"])
     month_options = sorted(bookings["Month"].dropna().astype(str).unique().tolist())
     selected_months = st.multiselect("Month", month_options, default=month_options)
     filtered = bookings[bookings["Month"].astype(str).isin(selected_months)] if selected_months else bookings.iloc[0:0]
@@ -331,30 +356,31 @@ elif page == "📦 Booking Performance":
         daily = filtered.groupby("Booking Date", as_index=False)["Bookings"].sum().sort_values("Booking Date")
         fig = px.line(daily, x="Booking Date", y="Bookings", markers=True, title="Daily YVF Booking Trend", color_discrete_sequence=[BLUE])
         fig.update_traces(line=dict(width=3), marker=dict(size=8))
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
     with right:
         by_mode = filtered.groupby("Transport Mode", as_index=False)["Bookings"].sum()
         fig = px.pie(by_mode, names="Transport Mode", values="Bookings", hole=.55, title="Bookings by Transport Mode", color_discrete_sequence=[BLUE, ORANGE, GREEN])
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
 
     left, right = st.columns(2)
     with left:
         by_customer = filtered.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=False)
         fig = px.bar(by_customer, x="Customer Name", y="Bookings", text="Bookings", title="Bookings by Customer", color_discrete_sequence=[ORANGE])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
     with right:
         by_handler = filtered.groupby("Handled By", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=False)
         fig = px.bar(by_handler, x="Handled By", y="Bookings", text="Bookings", title="Bookings by Handler", color_discrete_sequence=[BLUE])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
 
     display = filtered.copy()
     display["Booking Date"] = display["Booking Date"].dt.strftime("%d-%b-%Y")
     st.markdown('<div class="section-title">Booking Details</div>', unsafe_allow_html=True)
-    st.dataframe(display, hide_index=True, use_container_width=True, height=360)
+    st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=360)
 
 elif page == "⚠️ User Issues":
+    issues = normalize_dates(load_sheet(str(DATA_FILE), "User Issues", file_mtime_ns), ["Date"])
     status_filter = st.multiselect("Status", sorted(issues["Status"].dropna().unique()), default=sorted(issues["Status"].dropna().unique()))
     filtered = issues[issues["Status"].isin(status_filter)] if status_filter else issues.iloc[0:0]
     c = st.columns(4)
@@ -368,17 +394,18 @@ elif page == "⚠️ User Issues":
         cat = issues["Category"].value_counts().reset_index(); cat.columns=["Category","Issues"]
         fig = px.bar(cat, x="Category", y="Issues", text="Issues", title="Issues by Category", color_discrete_sequence=[ORANGE])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
     with right:
         stat = issues["Status"].value_counts().reset_index(); stat.columns=["Status","Issues"]
         fig = px.pie(stat, names="Status", values="Issues", hole=.58, title="Issue Resolution Status",
                      color="Status", color_discrete_map={"Open": RED, "In Progress": ORANGE, "Completed": GREEN})
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
 
     display = filtered.copy(); display["Date"] = display["Date"].dt.strftime("%d-%b-%Y")
-    st.dataframe(display, hide_index=True, use_container_width=True, height=380)
+    st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=380)
 
 elif page == "💡 Improvement Proposals":
+    proposals = normalize_dates(load_sheet(str(DATA_FILE), "Improvement Proposals", file_mtime_ns), ["Proposal Date"])
     c = st.columns(4)
     with c[0]: kpi("Total Proposals", fmt_int(len(proposals)), "All improvement ideas")
     with c[1]: kpi("Open", fmt_int((proposals["Status"] == "Open").sum()), "Awaiting action")
@@ -390,17 +417,18 @@ elif page == "💡 Improvement Proposals":
         cat = proposals["Category"].value_counts().reset_index(); cat.columns=["Category","Proposals"]
         fig = px.bar(cat, x="Category", y="Proposals", text="Proposals", title="Proposals by Category", color_discrete_sequence=[BLUE])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
     with right:
         stat = proposals["Status"].value_counts().reset_index(); stat.columns=["Status","Proposals"]
         fig = px.pie(stat, names="Status", values="Proposals", hole=.58, title="Proposal Status",
                      color="Status", color_discrete_map={"Open": RED, "In Progress": ORANGE, "Completed": GREEN})
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
 
     display = proposals.copy(); display["Proposal Date"] = display["Proposal Date"].dt.strftime("%d-%b-%Y")
-    st.dataframe(display, hide_index=True, use_container_width=True, height=380)
+    st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=380)
 
 elif page == "⭐ Customer Feedback":
+    feedback = normalize_dates(load_sheet(str(DATA_FILE), "Customer_Feedback", file_mtime_ns), ["Feedback Date"])
     c = st.columns(4)
     with c[0]: kpi("Positive Feedback", fmt_int(len(feedback)), "Recorded customer comments")
     with c[1]: kpi("Customers", fmt_int(feedback["Customer"].nunique()), "Customers providing feedback")
@@ -410,7 +438,7 @@ elif page == "⭐ Customer Feedback":
     cat = feedback["Category"].value_counts().reset_index(); cat.columns=["Category","Feedback"]
     fig = px.bar(cat, x="Category", y="Feedback", text="Feedback", title="Positive Feedback by Category", color_discrete_sequence=[GREEN])
     fig.update_traces(textposition="outside")
-    st.plotly_chart(style_fig(fig, 300), use_container_width=True)
+    st.plotly_chart(style_fig(fig, 300), use_container_width=True, config=PLOTLY_CONFIG)
 
     st.markdown('<div class="section-title">Customer Highlights</div>', unsafe_allow_html=True)
     cards = st.columns(min(3, max(1, len(feedback))))
