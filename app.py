@@ -308,7 +308,7 @@ if page == "🏠 Overview":
     with cols[2]:
         kpi("Adoption Rate", fmt_pct(adoption_rate))
     with cols[3]:
-        kpi("Number of Bookings", fmt_int(yvf_bookings))
+        kpi("YTD Bookings", fmt_int(yvf_bookings))
   
     st.markdown(
         "<div style='height:38px;'></div>",
