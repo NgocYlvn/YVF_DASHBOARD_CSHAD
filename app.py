@@ -72,8 +72,9 @@ st.markdown(
     }
 
     /* Compact header without covering messages or the dashboard title */
-    [data-testid="stHeader"]{
-        background: transparent;
+    [data-testid="stHeader"] {
+        height: 3rem;
+        background: rgba(247, 249, 252, 0.96);
     }
 
     [data-testid="stToolbar"] {
@@ -91,12 +92,13 @@ st.markdown(
     }
 
     .dashboard-title {
-        font-size: 1.9rem;
+        font-size: 1.72rem;
         font-weight: 800;
-        color: #083B82;
-        opacity: 1;
+        color: #083b82 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        margin: 0 0 0.15rem 0;
         letter-spacing: -0.02em;
-        margin-bottom: 0.2rem;
     }
 
     .dashboard-subtitle {
@@ -543,7 +545,6 @@ st.markdown(
     f'<div class="dashboard-title">{APP_TITLE}</div>',
     unsafe_allow_html=True,
 )
-
 st.markdown(
     f'<div class="dashboard-subtitle">📅 Last Updated: {data_date}</div>',
     unsafe_allow_html=True,
@@ -554,8 +555,8 @@ st.markdown(
 # PAGE 1: OVERVIEW
 # ============================================================
 if page == "Overview":
-    # Equal-width KPI cards
-    cols = st.columns(8, gap="small")
+    # Six executive KPI cards with equal width and height
+    cols = st.columns(6, gap="small")
     with cols[0]:
         kpi_card("Eligible Customers", f"{metrics['eligible']}")
     with cols[1]:
@@ -571,18 +572,19 @@ if page == "Overview":
             f"Onboarding rate: {format_percent(metrics['new_rate'])}",
         )
     with cols[3]:
-        kpi_card("Active Customers", f"{metrics['active']}", accent="accent-green")
-    with cols[4]:
-        kpi_card("Pending Onboarding", f"{metrics['pending']}", accent="accent-amber")
-    with cols[5]:
-        kpi_card("YTD Bookings via YVF", f"{metrics['ytd_bookings']}")
-    with cols[6]:
         kpi_card(
-            "Avg. Processing Time",
-            f"{metrics['avg_time']} min",
-            "Per booking",
+            "Active Customers",
+            f"{metrics['active']}",
+            f"Activation rate: {format_percent(metrics['active_rate'])}",
+            accent="accent-green",
         )
-    with cols[7]:
+    with cols[4]:
+        kpi_card(
+            "YTD Bookings via YVF",
+            f"{metrics['ytd_bookings']}",
+            f"Target achievement: {format_percent(metrics['booking_achievement'], 1)}",
+        )
+    with cols[5]:
         kpi_card(
             f"{FY_LABEL} Targets",
             f"{metrics['onboarding_target']} / {metrics['booking_target']}",
@@ -884,18 +886,21 @@ elif page == "Booking Performance":
         ]
 
     total_bookings = int(filtered_booking["Bookings"].sum())
-    avg_processing = filtered_booking["Processing Time (min)"].mean()
-    avg_processing = 0 if pd.isna(avg_processing) else round(avg_processing, 1)
-    active_customers = int(filtered_booking["Customer Name"].nunique())
-    air_share = safe_divide(
-        filtered_booking.loc[
-            filtered_booking["Transport Mode"].str.casefold().eq("air"),
-            "Bookings",
-        ].sum(),
-        total_bookings,
-    )
+    processing_series = filtered_booking["Processing Time (min)"].dropna()
 
-    c1, c2, c3, c4 = st.columns(4)
+    avg_processing = processing_series.mean()
+    avg_processing = 0 if pd.isna(avg_processing) else round(float(avg_processing), 1)
+
+    fastest_processing = processing_series.min()
+    fastest_processing = 0 if pd.isna(fastest_processing) else round(float(fastest_processing), 1)
+
+    slowest_processing = processing_series.max()
+    slowest_processing = 0 if pd.isna(slowest_processing) else round(float(slowest_processing), 1)
+
+    active_customers = int(filtered_booking["Customer Name"].nunique())
+    booking_achievement = safe_divide(total_bookings, BOOKING_TARGET)
+
+    c1, c2, c3, c4, c5 = st.columns(5, gap="small")
     with c1:
         kpi_card("Bookings in Selection", total_bookings)
     with c2:
@@ -903,7 +908,14 @@ elif page == "Booking Performance":
     with c3:
         kpi_card("Avg. Processing Time", f"{avg_processing:.1f} min")
     with c4:
-        kpi_card("Air Booking Share", format_percent(air_share))
+        kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
+    with c5:
+        kpi_card(
+            "Booking Achievement",
+            format_percent(booking_achievement, 1),
+            f"{total_bookings} / {BOOKING_TARGET} bookings",
+            accent="accent-orange",
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.55, 1])
@@ -1140,6 +1152,6 @@ else:
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    'Data is calculated directly from the Excel workbook | Version 4.0</div>',
+    'Data is calculated directly from the Excel workbook | Version 5.0</div>',
     unsafe_allow_html=True,
 )
