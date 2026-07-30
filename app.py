@@ -242,24 +242,55 @@ if page == "🏠 Overview":
                      color="Status", color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"])
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig), use_container_width=True)
-    with right:
-        gauge = go.Figure(go.Indicator(
+with right:
+    gauge = go.Figure(
+        go.Indicator(
             mode="gauge+number+delta",
             value=booking_achievement * 100,
-            number={"suffix": "%", "font": {"size": 34}},
-            delta={"reference": 100, "relative": False},
-        style_fig(gauge)
-        gauge.update_layout(
-            title_text="Monthly Booking Target Achievement"
-        )
-            gauge={
-                "axis": {"range": [0, max(120, booking_achievement * 120)]},
-                "bar": {"color": ORANGE},
-                "steps": [{"range": [0, 70], "color": "#FBE9DF"}, {"range": [70, 100], "color": "#DDEAF5"}],
-                "threshold": {"line": {"color": GREEN, "width": 4}, "value": 100},
+            number={
+                "suffix": "%",
+                "font": {"size": 34}
             },
-        ))
-        st.plotly_chart(style_fig(gauge), use_container_width=True)
+            delta={
+                "reference": 100,
+                "relative": False
+            },
+            gauge={
+                "axis": {
+                    "range": [0, max(120, booking_achievement * 120)]
+                },
+                "bar": {
+                    "color": ORANGE
+                },
+                "steps": [
+                    {
+                        "range": [0, 70],
+                        "color": "#FBE9DF"
+                    },
+                    {
+                        "range": [70, 100],
+                        "color": "#DDEAF5"
+                    }
+                ],
+                "threshold": {
+                    "line": {
+                        "color": GREEN,
+                        "width": 4
+                    },
+                    "value": 100
+                }
+            }
+        )
+    )
+
+    gauge.update_layout(
+        title_text="Monthly Booking Target Achievement"
+    )
+
+    st.plotly_chart(
+        style_fig(gauge),
+        use_container_width=True
+    )
 
     c1, c2 = st.columns([1.25, 1])
     with c1:
