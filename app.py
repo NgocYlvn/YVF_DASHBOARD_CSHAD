@@ -370,7 +370,7 @@ if page == "🏠 Overview":
         fig = px.bar(booking_by_customer, x="Bookings", y="Customer Name", orientation="h", text="Bookings",
                      title="YVF Bookings by Customer", color_discrete_sequence=[BLUE])
         fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig, 330), use_container_width=True, config=PLOTLY_CONFIG)
+        st.plotly_chart(style_fig(fig, 260), use_container_width=True, config=PLOTLY_CONFIG)
     with c2:
         open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
         completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
