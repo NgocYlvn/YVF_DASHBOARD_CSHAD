@@ -325,57 +325,36 @@ if page == "🏠 Overview":
             .reset_index(name="Customers")
         )
         
-       fig = px.bar(
-    status_counts,
-    x="Status",
-    y="Customers",
-    text="Customers",
-    title="Booking Status",
-    color="Status",
-    category_orders={"Status": status_order},
-    color_discrete_map={
-        "Fully Booking": GREEN,
-        "Trial Booking": ORANGE,
-        "Not Booking Yet": "#9AA9B6",
-    },
+        fig = px.bar(
+            status_counts,
+            x="Status",
+            y="Customers",
+            text="Customers",
+            title="Booking Status",
+            color="Status",
+            category_orders={"Status": status_order},
+            color_discrete_map={
+                "Fully Booking": GREEN,
+                "Trial Booking": ORANGE,
+                "Not Booking Yet": "#9AA9B6",
+            },
+        )
+        fig.update_xaxes(title=None)
+        fig.update_traces(textposition="outside")
+        fig.update_xaxes(
+    showticklabels=False
 )
-
-fig.update_layout(
-    legend=dict(
-        orientation="v",
-        x=0.98,
-        y=0.50,
-        xanchor="left",
-        yanchor="middle",
-        font=dict(size=14),
-    ),
-    margin=dict(
-        l=20,
-        r=150,
-        t=60,
-        b=20,
-    ),
-)
-
-fig.update_xaxes(
-    title=None,
-    showticklabels=False,
-)
-
-fig.update_traces(
-    textposition="outside"
-)
-
-fig.update_yaxes(
-    dtick=1,
-    rangemode="tozero",
-)
-
-st.plotly_chart(
-    style_fig(fig),
-    use_container_width=True,
-    config=PLOTLY_CONFIG,
-)
+        
+        fig.update_yaxes(
+            dtick=1,
+            rangemode="tozero"
+        )
+        
+        st.plotly_chart(
+            style_fig(fig),
+            use_container_width=True,
+            config=PLOTLY_CONFIG,
+        )
 
     c1, c2 = st.columns([1.25, 1])
     with c1:
