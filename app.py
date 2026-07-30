@@ -394,52 +394,58 @@ if page == "🏠 Overview":
     # RIGHT: BOOKINGS BY CUSTOMER
     # =========================
     with right:
-        booking_by_customer = (
-            bookings
-            .groupby("Customer Name", as_index=False)["Bookings"]
-            .sum()
-            .sort_values("Bookings", ascending=True)
-        )
+    booking_by_customer = (
+        bookings
+        .groupby("Customer Name", as_index=False)["Bookings"]
+        .sum()
+        .sort_values("Bookings", ascending=True)
+    )
 
-        fig = px.bar(
-            booking_by_customer,
-            x="Bookings",
-            y="Customer Name",
-            orientation="h",
-            text="Bookings",
-            title="YVF Bookings by Customer",
-            color_discrete_sequence=[BLUE]
-        )
+    fig = px.bar(
+        booking_by_customer,
+        x="Bookings",
+        y="Customer Name",
+        orientation="h",
+        text="Bookings",
+        title="YVF Bookings by Customer",
+        color_discrete_sequence=[BLUE]
+    )
 
-        fig.update_traces(
-            textposition="outside"
-        )
+    fig.update_traces(
+        textposition="outside",
+        cliponaxis=False
+    )
 
-        fig.update_xaxes(
-            title=None,
-            showgrid=True
-        )
+    max_customer_booking = booking_by_customer["Bookings"].max()
 
-        fig.update_yaxes(
-            title=None
-        )
+    fig.update_xaxes(
+        title=None,
+        range=[0, max_customer_booking * 1.18],
+        showgrid=True,
+        gridcolor="#EEF2F6"
+    )
 
-        fig.update_layout(
-            showlegend=False,
-            bargap=0.22,
-            margin=dict(
-                l=20,
-                r=45,
-                t=45,
-                b=10
-            )
-        )
+    fig.update_yaxes(
+        title=None
+    )
 
-        st.plotly_chart(
-            style_fig(fig, 270),
-            use_container_width=True,
-            config=PLOTLY_CONFIG,
+    fig.update_layout(
+        height=285,
+        showlegend=False,
+        bargap=0.22,
+        margin=dict(
+            l=25,
+            r=70,
+            t=50,
+            b=15
         )
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config=PLOTLY_CONFIG,
+    )
 
     # =========================
     # MANAGEMENT SNAPSHOT
