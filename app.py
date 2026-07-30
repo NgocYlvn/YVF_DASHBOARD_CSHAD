@@ -508,8 +508,38 @@ elif page == "👥 Adoption":
         status_volume = volume.groupby("YVF Status", as_index=False)["Total Volume"].sum().sort_values("Total Volume", ascending=False)
         fig = px.bar(status_volume, x="YVF Status", y="Total Volume", text="Total Volume", title="Shipment Volume by YVF Status",
                      color="YVF Status", color_discrete_sequence=[BLUE, ORANGE, GREEN, "#8394A5", "#B0BBC5"])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True, config=PLOTLY_CONFIG)
+        fig.update_traces(
+        textposition="outside",
+        cliponaxis=False
+    )
+    
+        fig.update_xaxes(
+        title=None,
+        range=[0, booking_by_customer["Bookings"].max() * 1.18],
+        showgrid=True,
+        gridcolor="#EEF2F6"
+    )
+    
+        fig.update_yaxes(
+        title=None
+    )
+    
+        fig.update_layout(
+        height=285,
+        showlegend=False,
+        bargap=0.22,
+        margin=dict(
+            l=25,
+            r=70,
+            t=50,
+            b=15
+        )
+    )
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config=PLOTLY_CONFIG,
+    )
 
     st.markdown('<div class="section-title">Approved Customer Accounts</div>', unsafe_allow_html=True)
     st.dataframe(onboarded, hide_index=True, use_container_width=True, height=340)
