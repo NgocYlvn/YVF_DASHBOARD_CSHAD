@@ -539,8 +539,10 @@ data_date = (
     else "Not available"
 )
 
+st.markdown(f'<div class="dashboard-title">{APP_TITLE}</div>', unsafe_allow_html=True)
 st.markdown(
-    f'<div class="dashboard-subtitle">Updated: {data_date}</div>',
+    f'<div class="dashboard-subtitle">Data source: {source_name} &nbsp;|&nbsp; '
+    f'Data updated through: {data_date}</div>',
     unsafe_allow_html=True,
 )
 
