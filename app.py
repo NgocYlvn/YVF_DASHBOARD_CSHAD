@@ -260,16 +260,18 @@ st.markdown(
 overview = load_sheet(str(DATA_FILE), "Dashboard_Overview", file_mtime_ns)
 ov = overview.iloc[-1] if not overview.empty else pd.Series(dtype="object")
 eligible = safe_num(ov.get("Eligible Customers"))
-total_hbl = safe_num(ov.get("Total Export HBLs"))
 onboarded_count = safe_num(ov.get("Onboarded Customers"))
-onboarding_rate = onboarded_count / eligible if eligible > 0 else 0
+adoption_rate = (
+    onboarded_count / eligible
+    if eligible > 0
+    else 0
+)
 pending = safe_num(ov.get("Pending Customers"))
 active = safe_num(ov.get("Active YVF Customers"))
 yvf_bookings = safe_num(ov.get("YVF Bookings"))
 avg_time = safe_num(ov.get("Avg. Booking Time (min/booking)"))
 new_customer_target = safe_num(ov.get("New Customer Target"))
 monthly_target = safe_num(ov.get("Monthly Booking Target"))
-source_adoption_rate = onboarded_count / eligible if eligible > 0 else 0
 booking_achievement = yvf_bookings / monthly_target if monthly_target else 0
 
 # Common Plotly settings reduce browser-side rendering work.
@@ -290,7 +292,7 @@ if page == "🏠 Overview":
     with cols[1]:
         kpi("Onboarded Customers", fmt_int(onboarded_count))
     with cols[2]:
-        kpi("Adoption Rate", fmt_pct(source_adoption_rate))
+        kpi("Adoption Rate", fmt_pct(adoption_rate))
     with cols[3]:
         kpi("Number of Bookings", fmt_int(yvf_bookings))
   
