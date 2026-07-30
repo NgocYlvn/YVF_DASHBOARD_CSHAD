@@ -185,9 +185,18 @@ fig.update_layout(
         yanchor="middle"
     )
 )
-    fig.update_xaxes(showgrid=False, linecolor="#E8EDF2")
-    fig.update_yaxes(gridcolor="#EEF2F6", zeroline=False)
-    return fig
+
+fig.update_xaxes(
+    showgrid=False,
+    linecolor="#E8EDF2"
+)
+
+fig.update_yaxes(
+    gridcolor="#EEF2F6",
+    zeroline=False
+)
+
+return fig
 
 
 def normalize_dates(df: pd.DataFrame, columns: Iterable[str]) -> pd.DataFrame:
