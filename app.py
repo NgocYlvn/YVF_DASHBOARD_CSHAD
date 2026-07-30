@@ -325,37 +325,64 @@ if page == "🏠 Overview":
             .reset_index(name="Customers")
         )
         
-        st.markdown("### YVF Bookings by Customer")
-
-max_booking = booking_by_customer["Bookings"].max()
-
-for _, row in booking_by_customer.iterrows():
-    customer = row["Customer Name"]
-    bookings = row["Bookings"]
-
-    progress = bookings / max_booking if max_booking else 0
-
-    col1, col2 = st.columns([3, 1])
-
-    with col1:
-        st.markdown(f"**{customer}**")
-        st.progress(progress)
-
-    with col2:
-        st.markdown(
-            f"<div style='text-align:right;font-size:24px;font-weight:700'>{int(bookings)}</div>",
-            unsafe_allow_html=True,
+        fig = px.bar(
+            status_counts,
+            x="Status",
+            y="Customers",
+            text="Customers",
+            title="Booking Status",
+            color="Status",
+            category_orders={"Status": status_order},
+            color_discrete_map={
+                "Fully Booking": GREEN,
+                "Trial Booking": ORANGE,
+                "Not Booking Yet": "#9AA9B6",
+            },
+        )
+        fig.update_xaxes(title=None)
+        fig.update_traces(textposition="outside")
+        fig.update_xaxes(
+    showticklabels=False
+)
+        
+        fig.update_yaxes(
+            dtick=1,
+            rangemode="tozero"
+        )
+        
+        st.plotly_chart(
+            style_fig(fig),
+            use_container_width=True,
+            config=PLOTLY_CONFIG,
         )
 
-    st.write("")
-
     c1, c2 = st.columns([1.25, 1])
-    with c1:
-        booking_by_customer = bookings.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=True)
-        fig = px.bar(booking_by_customer, x="Bookings", y="Customer Name", orientation="h", text="Bookings",
-                     title="YVF Bookings by Customer", color_discrete_sequence=[BLUE])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig, 330), use_container_width=True, config=PLOTLY_CONFIG)
+    c1, c2 = st.columns([1.25, 1], gap="large")
+
+with c1:
+    st.markdown("### YVF Bookings by Customer")
+
+    max_booking = booking_by_customer["Bookings"].max()
+
+    for _, row in booking_by_customer.iterrows():
+        customer = row["Customer Name"]
+        bookings = row["Bookings"]
+
+        progress = bookings / max_booking if max_booking else 0
+
+        col1, col2 = st.columns([4, 1])
+
+        with col1:
+            st.markdown(f"**{customer}**")
+            st.progress(progress)
+
+        with col2:
+            st.markdown(
+                f"<div style='text-align:right;font-size:22px;font-weight:700'>{int(bookings)}</div>",
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
     with c2:
         open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
         completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
