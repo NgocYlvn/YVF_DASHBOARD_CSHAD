@@ -1103,6 +1103,9 @@ elif page == "Booking Performance":
             categoryarray=processing["Date Label"].tolist(),
             tickangle=0,
             title_text="",
+            showticklabels=False,
+            showline=False,
+            ticks="",
         )
 
         fig.update_yaxes(
@@ -1187,9 +1190,36 @@ else:
             orientation="h",
             text="Issues",
         )
-        fig.update_traces(marker_color="#ed6b21", textposition="outside")
+        fig.update_traces(
+            marker_color="#ed6b21",
+            textposition="outside",
+            cliponaxis=False,
+        )
         standard_chart_layout(fig, 300)
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+        fig.update_layout(
+            margin=dict(l=20, r=45, t=35, b=20),
+        )
+
+        fig.update_xaxes(
+            showticklabels=False,
+            showgrid=False,
+            showline=False,
+            ticks="",
+            title_text="",
+            rangemode="tozero",
+        )
+
+        fig.update_yaxes(
+            title_text="",
+            automargin=True,
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
 
     with right:
         st.markdown('<div class="section-title">PROPOSALS BY PRIORITY</div>', unsafe_allow_html=True)
