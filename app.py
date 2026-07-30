@@ -333,9 +333,9 @@ if page == "🏠 Overview":
             },
         )
            fig.update_layout(
-           xaxis_title=None,
-        yaxis_title="Customers"
-    )
+    xaxis_title=None,
+    yaxis_title="Customers"
+)
         fig.update_traces(textposition="outside")
         
         fig.update_yaxes(
