@@ -245,13 +245,13 @@ if page == "🏠 Overview":
     issues = normalize_dates(load_sheet(str(DATA_FILE), "User Issues", file_mtime_ns), ["Date"])
     cols = st.columns(4)
     with cols[0]:
-        kpi("Eligible Customers", fmt_int(eligible), "Target customer pool")
+        kpi("Eligible Customers", fmt_int(eligible)
     with cols[1]:
-        kpi("Onboarded Customers", fmt_int(onboarded_count), f"Onboarding rate {fmt_pct(onboarding_rate)}")
+        kpi("Onboarded Customers", fmt_int(onboarded_count)
     with cols[2]:
-        kpi("Adoption Rate", fmt_pct(source_adoption_rate), "Onboarded / Eligible")
+        kpi("Adoption Rate", fmt_pct(source_adoption_rate)
     with cols[3]:
-        kpi("Number of Bookings", fmt_int(yvf_bookings), f"Monthly target {fmt_int(monthly_target)}")
+        kpi("Number of Bookings", fmt_int(yvf_bookings)
 
     left, right = st.columns([1.12, 1])
     with left:
