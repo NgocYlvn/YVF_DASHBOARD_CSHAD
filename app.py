@@ -339,6 +339,16 @@ if page == "🏠 Overview":
                 "Not Booking Yet": "#9AA9B6",
             },
         )
+        fig.update_layout(
+    legend=dict(
+        orientation="v",
+        x=1.02,
+        y=0.5,
+        xanchor="left",
+        yanchor="middle",
+        font=dict(size=14)
+    )
+)
         fig.update_xaxes(title=None)
         fig.update_traces(textposition="outside")
         fig.update_xaxes(
