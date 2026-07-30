@@ -465,8 +465,8 @@ def gauge_chart(value, title, detail, color="#ed6b21"):
         )
     )
     fig.update_layout(
-        height=225,
-        margin=dict(l=16, r=16, t=58, b=8),
+        height=300,
+        margin=dict(l=5, r=5, t=35, b=0),
         paper_bgcolor="white",
         font={"color": "#172033"},
     )
@@ -582,7 +582,7 @@ if page == "Overview":
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    left, right = st.columns([1.0, 1.7], gap="medium")
+    left, right = st.columns([1.0, 1.8], gap="medium")
 
     with left:
         st.markdown('<div class="section-title">PROGRESS TO TARGET</div>', unsafe_allow_html=True)
