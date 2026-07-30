@@ -92,12 +92,14 @@ st.markdown(
     }
 
     .dashboard-title {
-        font-size: 1.72rem;
+        font-size: 2rem;
         font-weight: 800;
-        color: #083b82 !important;
+        color: #083B82 !important;
         opacity: 1 !important;
+        filter: none !important;
         text-shadow: none !important;
-        margin: 0 0 0.15rem 0;
+        -webkit-text-fill-color: #083B82 !important;
+        margin: 0 0 0.2rem 0;
         letter-spacing: -0.02em;
     }
 
