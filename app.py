@@ -1172,6 +1172,6 @@ else:
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    'Data is calculated directly from the Excel workbook | Version 6.1</div>',
+    '© 2026 CS HAD | Internal Use Only | Version 1.0</div>',
     unsafe_allow_html=True,
 )
