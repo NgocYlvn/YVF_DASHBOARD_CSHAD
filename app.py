@@ -65,7 +65,19 @@ h1, h2, h3 {color: #17324D;}
     opacity:.9;
     font-size:13px;          /* trước là 15px */
 }
-.kpi-card {background:white; border:1px solid #E5EAF0; border-radius:15px; padding:16px 17px; min-height:118px; height:100%; box-shadow:0 4px 14px rgba(23,50,77,.06); overflow-wrap:anywhere;}
+.kpi-card{
+    background:white;
+    border:1px solid #E5EAF0;
+    border-radius:16px;
+    box-shadow:0 4px 14px rgba(23,50,77,.06);
+
+    height:190px;              /* tất cả KPI cao bằng nhau */
+    padding:24px;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
 .kpi-label {font-size:13px; color:#68798A; font-weight:600; margin-bottom:10px;}
 .kpi-value {font-size:29px; font-weight:750; color:#17324D; line-height:1.05;}
 .kpi-note {font-size:12px; color:#7D8B99; margin-top:8px;}
