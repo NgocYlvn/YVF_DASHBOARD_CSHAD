@@ -1039,82 +1039,82 @@ elif page == "Booking Performance":
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with right:
-    st.markdown(
-        '<div class="section-title">PROCESSING TIME BY DATE</div>',
-        unsafe_allow_html=True,
-    )
-
-    processing = (
-        filtered_booking[
-            filtered_booking["Bookings"] > 0
-        ]
-        .groupby("Booking Date", as_index=False)
-        .agg(
-            Avg_Processing_Time=("Processing Time (min)", "mean"),
-            Booking_Volume=("Bookings", "sum"),
+        st.markdown(
+            '<div class="section-title">PROCESSING TIME BY DATE</div>',
+            unsafe_allow_html=True,
         )
-        .sort_values("Booking Date")
-    )
 
-    processing["Booking Date"] = pd.to_datetime(
-        processing["Booking Date"],
-        errors="coerce",
-    )
+        processing = (
+            filtered_booking[
+                filtered_booking["Bookings"] > 0
+            ]
+            .groupby("Booking Date", as_index=False)
+            .agg(
+                Avg_Processing_Time=("Processing Time (min)", "mean"),
+                Booking_Volume=("Bookings", "sum"),
+            )
+            .sort_values("Booking Date")
+        )
 
-    processing = processing.dropna(
-        subset=["Booking Date", "Avg_Processing_Time"]
-    )
+        processing["Booking Date"] = pd.to_datetime(
+            processing["Booking Date"],
+            errors="coerce",
+        )
 
-    # Chỉ hiển thị ngày, không hiển thị giờ
-    processing["Date Label"] = processing["Booking Date"].dt.strftime("%d %b")
+        processing = processing.dropna(
+            subset=["Booking Date", "Avg_Processing_Time"]
+        )
 
-    fig = px.line(
-        processing,
-        x="Date Label",
-        y="Avg_Processing_Time",
-        markers=True,
-        custom_data=[
-            "Booking Date",
-            "Booking_Volume",
-        ],
-        category_orders={
-            "Date Label": processing["Date Label"].tolist()
-        },
-    )
+        # Display only the date label; do not show time values.
+        processing["Date Label"] = processing["Booking Date"].dt.strftime("%d %b")
 
-    fig.update_traces(
-        line_color="#ed6b21",
-        marker_color="#ed6b21",
-        line_width=2.5,
-        marker_size=8,
-        hovertemplate=(
-            "%{customdata[0]|%d %b %Y}"
-            "<br>Processing time: %{y:.1f} min"
-            "<br>Bookings: %{customdata[1]:.0f}"
-            "<extra></extra>"
-        ),
-    )
+        fig = px.line(
+            processing,
+            x="Date Label",
+            y="Avg_Processing_Time",
+            markers=True,
+            custom_data=[
+                "Booking Date",
+                "Booking_Volume",
+            ],
+            category_orders={
+                "Date Label": processing["Date Label"].tolist()
+            },
+        )
 
-    standard_chart_layout(fig, 330)
+        fig.update_traces(
+            line_color="#ed6b21",
+            marker_color="#ed6b21",
+            line_width=2.5,
+            marker_size=8,
+            hovertemplate=(
+                "%{customdata[0]|%d %b %Y}"
+                "<br>Processing time: %{y:.1f} min"
+                "<br>Bookings: %{customdata[1]:.0f}"
+                "<extra></extra>"
+            ),
+        )
 
-    fig.update_xaxes(
-        type="category",
-        categoryorder="array",
-        categoryarray=processing["Date Label"].tolist(),
-        tickangle=0,
-        title_text="",
-    )
+        standard_chart_layout(fig, 330)
 
-    fig.update_yaxes(
-        title_text="",
-        rangemode="tozero",
-    )
+        fig.update_xaxes(
+            type="category",
+            categoryorder="array",
+            categoryarray=processing["Date Label"].tolist(),
+            tickangle=0,
+            title_text="",
+        )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={"displayModeBar": False},
-    )
+        fig.update_yaxes(
+            title_text="",
+            rangemode="tozero",
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-title">BOOKING RECORDS</div>', unsafe_allow_html=True)
