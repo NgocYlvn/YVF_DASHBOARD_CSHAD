@@ -821,10 +821,38 @@ elif page == "Customer Adoption":
         ],
         hide_index=True,
         use_container_width=True,
+        height=430,
         column_config={
-            "Last Booking": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+            "Customer Name": st.column_config.TextColumn(
+                "Customer Name",
+                width="medium",
+            ),
+            "Transport Mode": st.column_config.TextColumn(
+                "Transport Mode",
+                width="small",
+            ),
+            "Booking Status": st.column_config.TextColumn(
+                "Booking Status",
+                width="medium",
+            ),
+            "YTD Bookings": st.column_config.NumberColumn(
+                "YTD Bookings",
+                width="small",
+                format="%d",
+            ),
+            "Last Booking": st.column_config.DateColumn(
+                "Last Booking",
+                width="small",
+                format="DD-MMM-YYYY",
+            ),
             "Avg. Processing Time": st.column_config.NumberColumn(
-                format="%.1f min"
+                "Avg. Processing Time",
+                width="medium",
+                format="%.1f min",
+            ),
+            "Remarks": st.column_config.TextColumn(
+                "Remarks",
+                width="large",
             ),
         },
     )
