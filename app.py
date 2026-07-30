@@ -359,10 +359,14 @@ if page == "🏠 Overview":
         )
         
         st.plotly_chart(
-            style_fig(fig),
+            style_fig(fig, 260),
             use_container_width=True,
             config=PLOTLY_CONFIG,
         )
+        fig.update_layout(
+    bargap=0.08,
+    margin=dict(l=20, r=170, t=45, b=10)
+)
 
     c1, c2 = st.columns([1.25, 1])
     with c1:
