@@ -227,17 +227,40 @@ def load_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame]:
 
 
 def read_source_file(uploaded_file):
+    """Load uploaded workbook or automatically find an Excel file in the app folder."""
     if uploaded_file is not None:
         return uploaded_file.getvalue(), uploaded_file.name
 
-    path = Path(DEFAULT_DATA_FILE)
-    if not path.exists():
-        st.error(
-            f"Data file not found. Please upload the Excel source file or place "
-            f"`{DEFAULT_DATA_FILE}` in the same GitHub repository as app.py."
-        )
-        st.stop()
-    return path.read_bytes(), path.name
+    app_dir = Path(__file__).resolve().parent
+    preferred_path = app_dir / DEFAULT_DATA_FILE
+
+    if preferred_path.exists():
+        return preferred_path.read_bytes(), preferred_path.name
+
+    # Fallback: accept any .xlsx file uploaded to the same GitHub repository.
+    excel_files = sorted(
+        [
+            p for p in app_dir.glob("*.xlsx")
+            if not p.name.startswith("~$")
+        ],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+    if excel_files:
+        fallback_path = excel_files[0]
+        return fallback_path.read_bytes(), fallback_path.name
+
+    st.error(
+        "Không tìm thấy file dữ liệu Excel trong GitHub Repository. "
+        "Vui lòng upload file .xlsx vào cùng thư mục với app.py, "
+        "hoặc mở thanh bên trái và chọn **Upload updated source data**."
+    )
+    st.info(
+        "Tên file khuyến nghị: `YVF_Adoption_Data.xlsx`. "
+        "Sau khi upload lên GitHub, vào Streamlit và chọn **Reboot app**."
+    )
+    st.stop()
 
 
 def safe_divide(numerator, denominator):
