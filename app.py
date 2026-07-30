@@ -177,26 +177,30 @@ def kpi(label: str, value: str) -> None:
 
 
 def style_fig(fig, height: int = 350):
-fig.update_layout(
-    legend=dict(
-        x=0.82,
-        y=0.5,
-        xanchor="left",
-        yanchor="middle"
+    fig.update_layout(
+        height=height,
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(l=20, r=20, t=50, b=20),
+        legend=dict(
+            x=0.82,
+            y=0.5,
+            xanchor="left",
+            yanchor="middle"
+        )
     )
-)
 
-fig.update_xaxes(
-    showgrid=False,
-    linecolor="#E8EDF2"
-)
+    fig.update_xaxes(
+        showgrid=False,
+        linecolor="#E8EDF2"
+    )
 
-fig.update_yaxes(
-    gridcolor="#EEF2F6",
-    zeroline=False
-)
+    fig.update_yaxes(
+        gridcolor="#EEF2F6",
+        zeroline=False
+    )
 
-return fig
+    return fig
 
 
 def normalize_dates(df: pd.DataFrame, columns: Iterable[str]) -> pd.DataFrame:
@@ -382,7 +386,7 @@ if page == "🏠 Overview":
         latest["Date"] = latest["Date"].dt.strftime("%d-%b-%Y")
         st.dataframe(latest, hide_index=True, use_container_width=True, height=220)
 
-elif page == "👥 Customer Adoption":
+elif page == "👥 Adoption":
     onboarded = load_sheet(str(DATA_FILE), "Onboarded_Customers", file_mtime_ns)
     volume = load_sheet(str(DATA_FILE), "Customer_Volume", file_mtime_ns)
     if "No." in volume.columns:
@@ -390,7 +394,7 @@ elif page == "👥 Customer Adoption":
     c = st.columns(4)
     with c[0]: kpi("Eligible Customers", fmt_int(eligible), "Customers suitable for promotion")
     with c[1]: kpi("Approved Accounts", fmt_int(len(onboarded)), "YVF accounts approved")
-    with c[2]: kpi("Fully Adopted", fmt_int((onboarded["YVF Booking Status"] == "Fully Adopted").sum()), "Using YVF as standard process")
+    with c[2]: kpi("Fully Booking", fmt_int((onboarded["YVF Booking Status"].astype(str).str.strip() == "Fully Booking").sum()), "Using YVF as standard process")
     with c[3]: kpi("Pending Customers", fmt_int(pending), "Pending onboarding")
 
     left, right = st.columns([1, 1.2])
@@ -411,7 +415,7 @@ elif page == "👥 Customer Adoption":
     st.markdown('<div class="section-title">Approved Customer Accounts</div>', unsafe_allow_html=True)
     st.dataframe(onboarded, hide_index=True, use_container_width=True, height=340)
 
-elif page == "📦 Booking Performance":
+elif page == "📦 Booking Status":
     bookings = normalize_dates(load_sheet(str(DATA_FILE), "Booking_Records", file_mtime_ns), ["Booking Date"])
     month_options = sorted(bookings["Month"].dropna().astype(str).unique().tolist())
     selected_months = st.multiselect("Month", month_options, default=month_options)
@@ -478,7 +482,7 @@ elif page == "⚠️ User Issues":
     display = filtered.copy(); display["Date"] = display["Date"].dt.strftime("%d-%b-%Y")
     st.dataframe(display.head(1000), hide_index=True, use_container_width=True, height=380)
 
-elif page == "💡 Improvement Proposals":
+elif page == "💡 Enhancement":
     proposals = normalize_dates(load_sheet(str(DATA_FILE), "Improvement Proposals", file_mtime_ns), ["Proposal Date"])
     c = st.columns(4)
     with c[0]: kpi("Total Proposals", fmt_int(len(proposals)), "All improvement ideas")
