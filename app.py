@@ -772,7 +772,10 @@ elif page == "Customer Adoption":
             orientation="h",
             text="Customers",
         )
-        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        fig.update_traces(
+    textposition="outside",
+    cliponaxis=False
+)
         standard_chart_layout(fig, 400)
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
