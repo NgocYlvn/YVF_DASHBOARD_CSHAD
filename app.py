@@ -302,7 +302,7 @@ if page == "🏠 Overview":
     )
     left, right = st.columns([1.12, 1], gap="large")
     with left:
-        status_order = ["Fully Adopted", "Trial Booking Completed", "No YVF Booking Yet"]
+        status_order = ["Fully Booking", "Trial Booking", "Not Booking Yet"]
         status_counts = onboarded["YVF Booking Status"].value_counts().reindex(status_order, fill_value=0).reset_index()
         status_counts.columns = ["Status", "Customers"]
         fig = px.bar(status_counts, x="Status", y="Customers", text="Customers", title="Approved Account Adoption Status",
