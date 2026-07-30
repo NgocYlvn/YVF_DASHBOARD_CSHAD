@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 import plotly.express as px
@@ -32,52 +30,46 @@ st.markdown(
 [data-testid="stSidebar"] .stRadio label:hover {background: rgba(255,255,255,.10);}
 .block-container {
     padding-top: 1.25rem;
-    padding-bottom: 2.5rem;
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-bottom: 2rem;
+    padding-left: 2.25rem;
+    padding-right: 2.25rem;
     max-width: 1500px;
 }
-[data-testid="stAppViewContainer"] .main {overflow-x: hidden;}
-[data-testid="stAppViewContainer"] section.main {min-width: 0;}
-[data-testid="collapsedControl"] {left: 0.75rem; top: 0.75rem; z-index: 1000;}
+
+/* Keep the collapsed sidebar button from covering dashboard content */
+[data-testid="stAppViewContainer"] .main {
+    overflow-x: hidden;
+}
+
+[data-testid="stAppViewContainer"] section.main {
+    min-width: 0;
+}
+
+[data-testid="collapsedControl"] {
+    left: 0.75rem;
+    top: 0.75rem;
+    z-index: 1000;
+}
+
 @media (max-width: 1200px) {
-    .block-container {padding-left: 4rem; padding-right: 1.25rem;}
+    .block-container {
+        padding-left: 4rem;
+        padding-right: 1.25rem;
+    }
 }
 h1, h2, h3 {color: #17324D;}
-.hero {
-    background: linear-gradient(110deg,#0B4F8A,#1469A9);
-    padding: 12px 22px;      /* trước là 22px 26px */
-    border-radius: 14px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(11,79,138,.12);
-    margin-bottom: 12px;
-}
-
-.hero h1 {
-    color:white;
-    margin:0;
-    font-size:22px;          /* trước là 30px */
-    font-weight:700;
-}
-
-.hero p {
-    margin:4px 0 0 0;
-    opacity:.9;
-    font-size:13px;          /* trước là 15px */
-}
+.hero {background: linear-gradient(110deg,#0B4F8A,#1469A9); padding: 22px 26px; border-radius: 18px; color: white; box-shadow: 0 8px 24px rgba(11,79,138,.16); margin-bottom: 18px;}
+.hero h1 {color:white; margin:0; font-size:30px;}
+.hero p {margin:5px 0 0 0; opacity:.88;}
 .kpi-card {
     background:white;
     border:1px solid #E5EAF0;
     border-radius:15px;
-    padding:18px 18px;
-    min-height:132px;
-    height:132px;
-    box-sizing:border-box;
+    padding:16px 17px;
+    min-height:118px;
+    height:100%;
     box-shadow:0 4px 14px rgba(23,50,77,.06);
     overflow-wrap:anywhere;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
 }
 .kpi-label {font-size:13px; color:#68798A; font-weight:600; margin-bottom:10px;}
 .kpi-value {font-size:29px; font-weight:750; color:#17324D; line-height:1.05;}
@@ -90,26 +82,6 @@ h1, h2, h3 {color: #17324D;}
 .quote {font-size:16px; color:#17324D; line-height:1.55;}
 .quote-meta {font-size:12px; color:#758696; margin-top:10px; font-weight:650;}
 .small-muted {font-size:12px;color:#738495;}
-.highlight-card {
-    background:white;
-    border:1px solid #E5EAF0;
-    border-radius:15px;
-    padding:18px 20px;
-    min-height:350px;
-    box-sizing:border-box;
-    box-shadow:0 4px 14px rgba(23,50,77,.06);
-}
-.highlight-row {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:18px;
-    padding:12px 0;
-    border-bottom:1px solid #EEF2F6;
-}
-.highlight-row:last-child {border-bottom:none;}
-.highlight-label {font-size:13px;color:#68798A;font-weight:650;}
-.highlight-value {font-size:21px;color:#17324D;font-weight:760;white-space:nowrap;}
 div[data-testid="stDataFrame"] {border:1px solid #E5EAF0; border-radius:12px; overflow:hidden;}
 </style>
 """,
@@ -128,6 +100,7 @@ def load_data(path: str) -> Dict[str, pd.DataFrame]:
     xlsx = pd.ExcelFile(path, engine="openpyxl")
     result: Dict[str, pd.DataFrame] = {}
     for sheet in xlsx.sheet_names:
+        # All source sheets use row 1 as a title and row 2 as headers.
         result[sheet] = clean_columns(pd.read_excel(path, sheet_name=sheet, header=1, engine="openpyxl"))
     return result
 
@@ -211,9 +184,11 @@ proposals = normalize_dates(data["Improvement Proposals"], ["Proposal Date"])
 feedback = normalize_dates(data["Customer_Feedback"], ["Feedback Date"])
 issues = normalize_dates(data["User Issues"], ["Date"])
 
+# Remove summary rows from customer volume.
 if "No." in volume.columns:
     volume = volume[pd.to_numeric(volume["No."], errors="coerce").notna()].copy()
 
+# Sidebar
 st.sidebar.markdown("## 📊 CS HAD")
 st.sidebar.caption("YVF Adoption Dashboard")
 page = st.sidebar.radio(
@@ -221,203 +196,91 @@ page = st.sidebar.radio(
     ["🏠 Overview", "👥 Customer Adoption", "📦 Booking Performance", "⚠️ User Issues", "💡 Improvement Proposals", "⭐ Customer Feedback"],
     label_visibility="collapsed",
 )
+st.sidebar.markdown("---")
+st.sidebar.caption("Data source")
+st.sidebar.success("Excel workbook connected")
+st.sidebar.caption("Update the Excel file in the data folder to refresh the dashboard.")
 
-updated_at = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y %H:%M")
 st.markdown(
-    f"""
-    <div class="hero">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
-            <h1>{APP_TITLE}</h1>
-            <span style="font-size:13px;font-weight:600;white-space:nowrap;">
-                🕒 Last updated: {updated_at}
-            </span>
-        </div>
-    </div>
-    """,
+    f'<div class="hero"><h1>{APP_TITLE}</h1><p>Executive overview of customer adoption, booking performance, user issues, improvement proposals, and customer feedback.</p></div>',
     unsafe_allow_html=True,
 )
 
+# Overview values are stored in the final row of the sheet.
 ov = overview.iloc[-1] if not overview.empty else pd.Series(dtype="object")
 eligible = safe_num(ov.get("Eligible Customers"))
 total_hbl = safe_num(ov.get("Total Export HBLs"))
-onboarded_count = safe_num(ov.get("Onboarded Customers"))
-onboarding_rate = onboarded_count / eligible if eligible > 0 else 0
+# Duplicate headers are auto-renamed by pandas; use position fallback where needed.
+onboarded_count = safe_num(ov.iloc[2] if len(ov) > 2 else 0)
+onboarding_rate = safe_num(ov.iloc[3] if len(ov) > 3 else 0)
 pending = safe_num(ov.get("Pending Customers"))
 active = safe_num(ov.get("Active YVF Customers"))
 yvf_bookings = safe_num(ov.get("YVF Bookings"))
 avg_time = safe_num(ov.get("Avg. Booking Time (min/booking)"))
-new_customer_target = safe_num(ov.get("New Customer Target"))
-monthly_target = safe_num(ov.get("Monthly Booking Target"))
-source_adoption_rate = (
-    onboarded_count / eligible
-    if eligible > 0
-    else 0
-)
+new_customer_target = safe_num(ov.iloc[8] if len(ov) > 8 else 0)
+monthly_target = safe_num(ov.iloc[9] if len(ov) > 9 else 0)
+source_adoption_rate = safe_num(ov.iloc[10] if len(ov) > 10 else 0)
 booking_achievement = yvf_bookings / monthly_target if monthly_target else 0
 
 if page == "🏠 Overview":
-    cols = st.columns(4, gap="large")
+    cols = st.columns(6)
+    with cols[0]: kpi("Eligible Customers", fmt_int(eligible), "Target customer pool")
+    with cols[1]: kpi("Onboarded Customers", fmt_int(onboarded_count), f"Onboarding rate {fmt_pct(onboarding_rate)}")
+    with cols[2]: kpi("Active YVF Customers", fmt_int(active), "Customers with YVF bookings")
+    with cols[3]: kpi("Adoption Rate", fmt_pct(source_adoption_rate), "YVF bookings / total export HBLs")
+    with cols[4]: kpi("YVF Bookings", fmt_int(yvf_bookings), f"Monthly target {fmt_int(monthly_target)}")
+    with cols[5]: kpi("Avg. Booking Time", f"{avg_time:.1f} min", "Per booking")
 
-    with cols[0]:
-        kpi("Eligible Customers", fmt_int(eligible), "Target customer pool")
-
-    with cols[1]:
-        kpi(
-            "Onboarded Customers",
-            fmt_int(onboarded_count),
-            f"Onboarding rate {fmt_pct(onboarding_rate)}"
-        )
-
-    with cols[2]:
-        kpi(
-            "Adoption Rate",
-            fmt_pct(source_adoption_rate),
-            "Onboarded / Eligible"
-        )
-
-    with cols[3]:
-        kpi(
-            "YVF Bookings",
-            fmt_int(yvf_bookings),
-            f"Monthly target {fmt_int(monthly_target)}"
-        )
-
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-
-    left, right = st.columns([1.25, 0.9], gap="large")
-
+    left, right = st.columns([1.12, 1])
     with left:
-        status_order = [
-            "Fully Adopted",
-            "Trial Booking Completed",
-            "No YVF Booking Yet"
-        ]
-
-        status_counts = (
-            onboarded["YVF Booking Status"]
-            .value_counts()
-            .reindex(status_order, fill_value=0)
-            .reset_index()
-        )
+        status_order = ["Fully Adopted", "Trial Booking Completed", "No YVF Booking Yet"]
+        status_counts = onboarded["YVF Booking Status"].value_counts().reindex(status_order, fill_value=0).reset_index()
         status_counts.columns = ["Status", "Customers"]
-
-        fig = px.bar(
-            status_counts,
-            x="Status",
-            y="Customers",
-            text="Customers",
-            title="Approved Account Adoption Status",
-            color="Status",
-            color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"]
-        )
+        fig = px.bar(status_counts, x="Status", y="Customers", text="Customers", title="Approved Account Adoption Status",
+                     color="Status", color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"])
         fig.update_traces(textposition="outside")
-        fig.update_layout(bargap=0.35)
-        st.plotly_chart(style_fig(fig, 350), use_container_width=True)
-
+        st.plotly_chart(style_fig(fig), use_container_width=True)
     with right:
-        open_issues = int(
-            (issues["Status"].astype(str).str.lower() == "open").sum()
-        )
-        completed_issues = int(
-            (issues["Status"].astype(str).str.lower() == "completed").sum()
-        )
+        gauge = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
+            value=booking_achievement * 100,
+            number={"suffix": "%", "font": {"size": 34}},
+            delta={"reference": 100, "relative": False},
+            title={"text": "Monthly Booking Target Achievement"},
+            gauge={
+                "axis": {"range": [0, max(120, booking_achievement * 120)]},
+                "bar": {"color": ORANGE},
+                "steps": [{"range": [0, 70], "color": "#FBE9DF"}, {"range": [70, 100], "color": "#DDEAF5"}],
+                "threshold": {"line": {"color": GREEN, "width": 4}, "value": 100},
+            },
+        ))
+        st.plotly_chart(style_fig(gauge), use_container_width=True)
 
-        booking_achievement_text = (
-            fmt_pct(booking_achievement)
-            if monthly_target > 0
-            else "No target"
-        )
-
-        st.markdown(
-            f"""
-            <div class="highlight-card">
-                <div class="section-title" style="margin-top:0;">
-                    Key Highlights
-                </div>
-
-                <div class="highlight-row">
-                    <div class="highlight-label">Eligible Customers</div>
-                    <div class="highlight-value">{fmt_int(eligible)}</div>
-                </div>
-
-                <div class="highlight-row">
-                    <div class="highlight-label">Onboarded Customers</div>
-                    <div class="highlight-value">{fmt_int(onboarded_count)}</div>
-                </div>
-
-                <div class="highlight-row">
-                    <div class="highlight-label">Adoption Rate</div>
-                    <div class="highlight-value">{fmt_pct(source_adoption_rate)}</div>
-                </div>
-
-                <div class="highlight-row">
-                    <div class="highlight-label">Booking Achievement</div>
-                    <div class="highlight-value">{booking_achievement_text}</div>
-                </div>
-
-                <div class="highlight-row">
-                    <div class="highlight-label">Open Issues</div>
-                    <div class="highlight-value">{open_issues}</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-
-    c1, c2 = st.columns([1.25, 1], gap="large")
-
+    c1, c2 = st.columns([1.25, 1])
     with c1:
-        booking_by_customer = (
-            bookings.groupby("Customer Name", as_index=False)["Bookings"]
-            .sum()
-            .sort_values("Bookings", ascending=True)
-        )
-
-        fig = px.bar(
-            booking_by_customer,
-            x="Bookings",
-            y="Customer Name",
-            orientation="h",
-            text="Bookings",
-            title="YVF Bookings by Customer",
-            color_discrete_sequence=[BLUE]
-        )
+        booking_by_customer = bookings.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=True)
+        fig = px.bar(booking_by_customer, x="Bookings", y="Customer Name", orientation="h", text="Bookings",
+                     title="YVF Bookings by Customer", color_discrete_sequence=[BLUE])
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig, 330), use_container_width=True)
-
     with c2:
+        open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
+        completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
+        st.markdown('<div class="section-title">Management Snapshot</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="section-title">Management Snapshot</div>',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            f"""
+            f'''
             <div class="insight">
-                <p><b>Adoption:</b> {fmt_int(onboarded_count)} onboarded customers out of {fmt_int(eligible)} eligible customers.</p>
-                <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equal to {booking_achievement_text} of the monthly target.</p>
+                <p><b>Adoption:</b> {fmt_int(active)} active customers out of {fmt_int(onboarded_count)} approved accounts.</p>
+                <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equivalent to {fmt_pct(booking_achievement)} of the monthly target.</p>
                 <p><b>Issues:</b> {open_issues} open and {completed_issues} completed.</p>
                 <p><b>Customer Feedback:</b> {len(feedback)} positive feedback records captured.</p>
             </div>
-            """,
+            ''',
             unsafe_allow_html=True,
         )
-
-        latest = (
-            issues.sort_values("Date", ascending=False)
-            .head(4)[["Date", "Customer", "Issue", "Status"]]
-            .copy()
-        )
+        latest = issues.sort_values("Date", ascending=False).head(4)[["Date", "Customer", "Issue", "Status"]].copy()
         latest["Date"] = latest["Date"].dt.strftime("%d-%b-%Y")
-
-        st.dataframe(
-            latest,
-            hide_index=True,
-            use_container_width=True,
-            height=220
-        )
+        st.dataframe(latest, hide_index=True, use_container_width=True, height=220)
 
 elif page == "👥 Customer Adoption":
     c = st.columns(4)
@@ -460,23 +323,27 @@ elif page == "📦 Booking Performance":
     left, right = st.columns([1.25, 1])
     with left:
         daily = filtered.groupby("Booking Date", as_index=False)["Bookings"].sum().sort_values("Booking Date")
-        fig = px.line(daily, x="Booking Date", y="Bookings", markers=True, title="Daily YVF Booking Trend", color_discrete_sequence=[BLUE])
+        fig = px.line(daily, x="Booking Date", y="Bookings", markers=True, title="Daily YVF Booking Trend",
+                      color_discrete_sequence=[BLUE])
         fig.update_traces(line=dict(width=3), marker=dict(size=8))
         st.plotly_chart(style_fig(fig), use_container_width=True)
     with right:
         by_mode = filtered.groupby("Transport Mode", as_index=False)["Bookings"].sum()
-        fig = px.pie(by_mode, names="Transport Mode", values="Bookings", hole=.55, title="Bookings by Transport Mode", color_discrete_sequence=[BLUE, ORANGE, GREEN])
+        fig = px.pie(by_mode, names="Transport Mode", values="Bookings", hole=.55, title="Bookings by Transport Mode",
+                     color_discrete_sequence=[BLUE, ORANGE, GREEN])
         st.plotly_chart(style_fig(fig), use_container_width=True)
 
     left, right = st.columns(2)
     with left:
         by_customer = filtered.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=False)
-        fig = px.bar(by_customer, x="Customer Name", y="Bookings", text="Bookings", title="Bookings by Customer", color_discrete_sequence=[ORANGE])
+        fig = px.bar(by_customer, x="Customer Name", y="Bookings", text="Bookings", title="Bookings by Customer",
+                     color_discrete_sequence=[ORANGE])
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig), use_container_width=True)
     with right:
         by_handler = filtered.groupby("Handled By", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=False)
-        fig = px.bar(by_handler, x="Handled By", y="Bookings", text="Bookings", title="Bookings by Handler", color_discrete_sequence=[BLUE])
+        fig = px.bar(by_handler, x="Handled By", y="Bookings", text="Bookings", title="Bookings by Handler",
+                     color_discrete_sequence=[BLUE])
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig), use_container_width=True)
 
@@ -539,7 +406,8 @@ elif page == "⭐ Customer Feedback":
     with c[3]: kpi("Latest Feedback", feedback["Feedback Date"].max().strftime("%d-%b-%Y") if feedback["Feedback Date"].notna().any() else "–", "Most recent record")
 
     cat = feedback["Category"].value_counts().reset_index(); cat.columns=["Category","Feedback"]
-    fig = px.bar(cat, x="Category", y="Feedback", text="Feedback", title="Positive Feedback by Category", color_discrete_sequence=[GREEN])
+    fig = px.bar(cat, x="Category", y="Feedback", text="Feedback", title="Positive Feedback by Category",
+                 color_discrete_sequence=[GREEN])
     fig.update_traces(textposition="outside")
     st.plotly_chart(style_fig(fig, 300), use_container_width=True)
 
