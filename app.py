@@ -332,7 +332,7 @@ if page == "🏠 Overview":
                 "Not Booking Yet": "#9AA9B6",
             },
         )
-        
+        fig.update_xaxes(title=None)
         fig.update_traces(textposition="outside")
         
         fig.update_yaxes(
