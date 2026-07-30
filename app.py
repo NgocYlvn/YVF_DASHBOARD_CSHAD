@@ -95,7 +95,7 @@ st.markdown(
         font-size: 2rem;
         font-weight: 800;
         color: #083B82 !important;
-        opacity: 1 !important;
+        opacity: 2 !important;
         filter: none !important;
         text-shadow: none !important;
         -webkit-text-fill-color: #083B82 !important;
