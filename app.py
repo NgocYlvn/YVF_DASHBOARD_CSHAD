@@ -164,12 +164,13 @@ def fmt_pct(value) -> str:
     return f"{v:.1%}"
 
 
-def kpi(label: str, value: str) -> None:
+def kpi(label: str, value: str, note: str = "") -> None:
     st.markdown(
         f"""
         <div class="kpi-card">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
+            <div class="kpi-note">{note}</div>
         </div>
         """,
         unsafe_allow_html=True,
