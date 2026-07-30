@@ -32,9 +32,9 @@ st.markdown(
 [data-testid="stSidebar"] .stRadio label:hover {background: rgba(255,255,255,.10);}
 .block-container {
     padding-top: 1.25rem;
-    padding-bottom: 2rem;
-    padding-left: 2.25rem;
-    padding-right: 2.25rem;
+    padding-bottom: 2.5rem;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
     max-width: 1500px;
 }
 [data-testid="stAppViewContainer"] .main {overflow-x: hidden;}
@@ -65,7 +65,20 @@ h1, h2, h3 {color: #17324D;}
     opacity:.9;
     font-size:13px;          /* trước là 15px */
 }
-.kpi-card {background:white; border:1px solid #E5EAF0; border-radius:15px; padding:16px 17px; min-height:118px; height:100%; box-shadow:0 4px 14px rgba(23,50,77,.06); overflow-wrap:anywhere;}
+.kpi-card {
+    background:white;
+    border:1px solid #E5EAF0;
+    border-radius:15px;
+    padding:18px 18px;
+    min-height:132px;
+    height:132px;
+    box-sizing:border-box;
+    box-shadow:0 4px 14px rgba(23,50,77,.06);
+    overflow-wrap:anywhere;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
 .kpi-label {font-size:13px; color:#68798A; font-weight:600; margin-bottom:10px;}
 .kpi-value {font-size:29px; font-weight:750; color:#17324D; line-height:1.05;}
 .kpi-note {font-size:12px; color:#7D8B99; margin-top:8px;}
@@ -77,6 +90,26 @@ h1, h2, h3 {color: #17324D;}
 .quote {font-size:16px; color:#17324D; line-height:1.55;}
 .quote-meta {font-size:12px; color:#758696; margin-top:10px; font-weight:650;}
 .small-muted {font-size:12px;color:#738495;}
+.highlight-card {
+    background:white;
+    border:1px solid #E5EAF0;
+    border-radius:15px;
+    padding:18px 20px;
+    min-height:350px;
+    box-sizing:border-box;
+    box-shadow:0 4px 14px rgba(23,50,77,.06);
+}
+.highlight-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:18px;
+    padding:12px 0;
+    border-bottom:1px solid #EEF2F6;
+}
+.highlight-row:last-child {border-bottom:none;}
+.highlight-label {font-size:13px;color:#68798A;font-weight:650;}
+.highlight-value {font-size:21px;color:#17324D;font-weight:760;white-space:nowrap;}
 div[data-testid="stDataFrame"] {border:1px solid #E5EAF0; border-radius:12px; overflow:hidden;}
 </style>
 """,
@@ -185,7 +218,7 @@ st.sidebar.markdown("## 📊 CS HAD")
 st.sidebar.caption("YVF Adoption Dashboard")
 page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Overview", "👥 Adoption", "📦 Booking Status", "⚠️ User Issues", "💡Enhancements", "⭐ Feedback"],
+    ["🏠 Overview", "👥 Customer Adoption", "📦 Booking Performance", "⚠️ User Issues", "💡 Improvement Proposals", "⭐ Customer Feedback"],
     label_visibility="collapsed",
 )
 
@@ -223,103 +256,168 @@ source_adoption_rate = (
 booking_achievement = yvf_bookings / monthly_target if monthly_target else 0
 
 if page == "🏠 Overview":
-    cols = st.columns(4)
+    cols = st.columns(4, gap="large")
+
     with cols[0]:
         kpi("Eligible Customers", fmt_int(eligible), "Target customer pool")
+
     with cols[1]:
-        kpi("Onboarded Customers", fmt_int(onboarded_count), f"Onboarding rate {fmt_pct(onboarding_rate)}")
-    with cols[2]:
-        kpi("Adoption Rate", fmt_pct(source_adoption_rate), "Onboarded / Eligible")
-    with cols[3]:
-        kpi("YVF Bookings", fmt_int(yvf_bookings), f"Monthly target {fmt_int(monthly_target)}")
-    st.markdown("<br>", unsafe_allow_html=True)
-    left, right = st.columns([1, 1], gap="large")
-    with left:
-        status_order = ["Fully Adopted", "Trial Booking Completed", "No YVF Booking Yet"]
-        status_counts = onboarded["YVF Booking Status"].value_counts().reindex(status_order, fill_value=0).reset_index()
-        status_counts.columns = ["Status", "Customers"]
-        fig = px.bar(status_counts, x="Status", y="Customers", text="Customers", title="Approved Account Adoption Status",
-                     color="Status", color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"])
-        fig.update_traces(textposition="outside")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-    with right:
-    gauge = go.Figure(
-        go.Indicator(
-            mode="gauge+number+delta",
-            value=booking_achievement * 100,
-
-            number={
-                "suffix": "%",
-                "font": {"size": 34}
-            },
-
-            delta={
-                "reference": 100,
-                "relative": False
-            },
-
-            gauge={
-                "axis": {
-                    "range": [0, max(120, booking_achievement * 120)]
-                },
-                "bar": {
-                    "color": ORANGE
-                },
-                "steps": [
-                    {
-                        "range": [0, 70],
-                        "color": "#FBE9DF"
-                    },
-                    {
-                        "range": [70, 100],
-                        "color": "#DDEAF5"
-                    }
-                ],
-                "threshold": {
-                    "line": {
-                        "color": GREEN,
-                        "width": 4
-                    },
-                    "value": 100
-                }
-            }
+        kpi(
+            "Onboarded Customers",
+            fmt_int(onboarded_count),
+            f"Onboarding rate {fmt_pct(onboarding_rate)}"
         )
-    )
 
-    gauge.update_layout(
-        title_text="Monthly Booking Target Achievement"
-    )
+    with cols[2]:
+        kpi(
+            "Adoption Rate",
+            fmt_pct(source_adoption_rate),
+            "Onboarded / Eligible"
+        )
 
-    st.plotly_chart(
-        style_fig(gauge),
-        use_container_width=True
-    )
+    with cols[3]:
+        kpi(
+            "YVF Bookings",
+            fmt_int(yvf_bookings),
+            f"Monthly target {fmt_int(monthly_target)}"
+        )
 
-    c1, c2 = st.columns([1.25, 1])
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+
+    left, right = st.columns([1.25, 0.9], gap="large")
+
+    with left:
+        status_order = [
+            "Fully Adopted",
+            "Trial Booking Completed",
+            "No YVF Booking Yet"
+        ]
+
+        status_counts = (
+            onboarded["YVF Booking Status"]
+            .value_counts()
+            .reindex(status_order, fill_value=0)
+            .reset_index()
+        )
+        status_counts.columns = ["Status", "Customers"]
+
+        fig = px.bar(
+            status_counts,
+            x="Status",
+            y="Customers",
+            text="Customers",
+            title="Approved Account Adoption Status",
+            color="Status",
+            color_discrete_sequence=[GREEN, ORANGE, "#9AA9B6"]
+        )
+        fig.update_traces(textposition="outside")
+        fig.update_layout(bargap=0.35)
+        st.plotly_chart(style_fig(fig, 350), use_container_width=True)
+
+    with right:
+        open_issues = int(
+            (issues["Status"].astype(str).str.lower() == "open").sum()
+        )
+        completed_issues = int(
+            (issues["Status"].astype(str).str.lower() == "completed").sum()
+        )
+
+        booking_achievement_text = (
+            fmt_pct(booking_achievement)
+            if monthly_target > 0
+            else "No target"
+        )
+
+        st.markdown(
+            f"""
+            <div class="highlight-card">
+                <div class="section-title" style="margin-top:0;">
+                    Key Highlights
+                </div>
+
+                <div class="highlight-row">
+                    <div class="highlight-label">Eligible Customers</div>
+                    <div class="highlight-value">{fmt_int(eligible)}</div>
+                </div>
+
+                <div class="highlight-row">
+                    <div class="highlight-label">Onboarded Customers</div>
+                    <div class="highlight-value">{fmt_int(onboarded_count)}</div>
+                </div>
+
+                <div class="highlight-row">
+                    <div class="highlight-label">Adoption Rate</div>
+                    <div class="highlight-value">{fmt_pct(source_adoption_rate)}</div>
+                </div>
+
+                <div class="highlight-row">
+                    <div class="highlight-label">Booking Achievement</div>
+                    <div class="highlight-value">{booking_achievement_text}</div>
+                </div>
+
+                <div class="highlight-row">
+                    <div class="highlight-label">Open Issues</div>
+                    <div class="highlight-value">{open_issues}</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+
+    c1, c2 = st.columns([1.25, 1], gap="large")
+
     with c1:
-        booking_by_customer = bookings.groupby("Customer Name", as_index=False)["Bookings"].sum().sort_values("Bookings", ascending=True)
-        fig = px.bar(booking_by_customer, x="Bookings", y="Customer Name", orientation="h", text="Bookings",
-                     title="YVF Bookings by Customer", color_discrete_sequence=[BLUE])
+        booking_by_customer = (
+            bookings.groupby("Customer Name", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=True)
+        )
+
+        fig = px.bar(
+            booking_by_customer,
+            x="Bookings",
+            y="Customer Name",
+            orientation="h",
+            text="Bookings",
+            title="YVF Bookings by Customer",
+            color_discrete_sequence=[BLUE]
+        )
         fig.update_traces(textposition="outside")
         st.plotly_chart(style_fig(fig, 330), use_container_width=True)
+
     with c2:
-        open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
-        completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
-        st.markdown('<div class="section-title">Management Snapshot</div>', unsafe_allow_html=True)
         st.markdown(
-            f'''
+            '<div class="section-title">Management Snapshot</div>',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            f"""
             <div class="insight">
-                <p><b>Adoption:</b> {fmt_int(active)} active customers out of {fmt_int(onboarded_count)} approved accounts.</p>
-                <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equivalent to {fmt_pct(booking_achievement)} of the monthly target.</p>
+                <p><b>Adoption:</b> {fmt_int(onboarded_count)} onboarded customers out of {fmt_int(eligible)} eligible customers.</p>
+                <p><b>Bookings:</b> {fmt_int(yvf_bookings)} YVF bookings, equal to {booking_achievement_text} of the monthly target.</p>
                 <p><b>Issues:</b> {open_issues} open and {completed_issues} completed.</p>
                 <p><b>Customer Feedback:</b> {len(feedback)} positive feedback records captured.</p>
             </div>
-            ''',
+            """,
             unsafe_allow_html=True,
         )
-        latest = issues.sort_values("Date", ascending=False).head(4)[["Date", "Customer", "Issue", "Status"]].copy()
+
+        latest = (
+            issues.sort_values("Date", ascending=False)
+            .head(4)[["Date", "Customer", "Issue", "Status"]]
+            .copy()
+        )
         latest["Date"] = latest["Date"].dt.strftime("%d-%b-%Y")
-        st.dataframe(latest, hide_index=True, use_container_width=True, height=220)
+
+        st.dataframe(
+            latest,
+            hide_index=True,
+            use_container_width=True,
+            height=220
+        )
 
 elif page == "👥 Customer Adoption":
     c = st.columns(4)
