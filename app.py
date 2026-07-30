@@ -367,24 +367,25 @@ if page == "🏠 Overview":
         )
 
         fig.update_layout(
+            height=285,
             bargap=0.08,
             legend=dict(
                 orientation="v",
-                x=1.02,
+                x=1.01,
                 y=0.5,
                 xanchor="left",
                 yanchor="middle"
             ),
             margin=dict(
                 l=20,
-                r=150,
-                t=45,
-                b=10
+                r=145,
+                t=50,
+                b=15
             )
         )
 
         st.plotly_chart(
-            style_fig(fig, 270),
+            fig,
             use_container_width=True,
             config=PLOTLY_CONFIG,
         )
