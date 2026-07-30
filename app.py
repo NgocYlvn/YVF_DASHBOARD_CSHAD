@@ -201,11 +201,6 @@ st.sidebar.caption("Data source")
 st.sidebar.success("Excel workbook connected")
 st.sidebar.caption("Update the Excel file in the data folder to refresh the dashboard.")
 
-st.markdown(
-    f'<div class="hero"><h1>{APP_TITLE}</h1><p>Executive overview of customer adoption, booking performance, user issues, improvement proposals, and customer feedback.</p></div>',
-    unsafe_allow_html=True,
-)
-
 # Overview values are stored in the final row of the sheet.
 ov = overview.iloc[-1] if not overview.empty else pd.Series(dtype="object")
 eligible = safe_num(ov.get("Eligible Customers"))
