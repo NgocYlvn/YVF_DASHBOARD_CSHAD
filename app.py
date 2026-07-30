@@ -366,7 +366,7 @@ if page == "🏠 Overview":
     with c2:
         open_issues = int((issues["Status"].astype(str).str.lower() == "open").sum())
         completed_issues = int((issues["Status"].astype(str).str.lower() == "completed").sum())
-        st.markdown('<div class="section-title">Management Snapshot</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Management Actions</div>', unsafe_allow_html=True)
         st.markdown(
             f'''
             <div class="insight">
