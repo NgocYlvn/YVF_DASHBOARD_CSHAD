@@ -232,8 +232,8 @@ if page == "🏠 Overview":
         kpi("Adoption Rate", fmt_pct(source_adoption_rate), "Onboarded / Eligible")
     with cols[3]:
         kpi("YVF Bookings", fmt_int(yvf_bookings), f"Monthly target {fmt_int(monthly_target)}")
-
-    left, right = st.columns([1.12, 1])
+    st.markdown("<br>", unsafe_allow_html=True)
+    left, right = st.columns([1, 1], gap="large")
     with left:
         status_order = ["Fully Adopted", "Trial Booking Completed", "No YVF Booking Yet"]
         status_counts = onboarded["YVF Booking Status"].value_counts().reindex(status_order, fill_value=0).reset_index()
