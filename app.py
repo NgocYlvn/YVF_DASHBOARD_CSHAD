@@ -23,7 +23,7 @@ APP_TITLE = "YVF Adoption Dashboard – CS HAD"
 DEFAULT_DATA_FILE = "YVF_Adoption_Data.xlsx"
 FY_LABEL = "FY2026"
 ONBOARDING_TARGET = 6
-BOOKING_TARGET = 500
+BOOKING_TARGET = 800
 
 NAV_ITEMS = [
     "Overview",
@@ -647,11 +647,65 @@ if page == "Overview":
             f"FY2026 ACTUAL VS TARGET: {format_percent(metrics['booking_achievement'], 1)}",
         )
     with cols[4]:
-        kpi_card(
-            f"{FY_LABEL} Targets",
-            f"{metrics['onboarding_target']} / {metrics['booking_target']}",
-            "Customers / Bookings",
-            accent="accent-orange",
+        st.markdown(
+            f"""
+            <div class="kpi-card accent-orange">
+                <div class="kpi-label">{FY_LABEL} Targets</div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin-top:8px;
+                    padding:0 8px;
+                ">
+                    <div style="width:48%; text-align:center;">
+                        <div style="
+                            font-size:1.78rem;
+                            font-weight:800;
+                            line-height:1.1;
+                            color:#ED6B21;
+                        ">
+                            {metrics['onboarding_target']}
+                        </div>
+                        <div style="
+                            margin-top:0.28rem;
+                            font-size:0.71rem;
+                            line-height:1.15;
+                            color:#667085;
+                        ">
+                            Customers
+                        </div>
+                    </div>
+
+                    <div style="
+                        width:1px;
+                        height:44px;
+                        background:#DCE5F0;
+                    "></div>
+
+                    <div style="width:48%; text-align:center;">
+                        <div style="
+                            font-size:1.78rem;
+                            font-weight:800;
+                            line-height:1.1;
+                            color:#ED6B21;
+                        ">
+                            {metrics['booking_target']}
+                        </div>
+                        <div style="
+                            margin-top:0.28rem;
+                            font-size:0.71rem;
+                            line-height:1.15;
+                            color:#667085;
+                        ">
+                            Bookings
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -877,7 +931,7 @@ elif page == "Customer Adoption":
             "YVF Booking Status": "Booking Status",
             "YTD_Bookings": "YTD Bookings",
             "Last_Booking": "Last Booking",
-            "Avg_Processing_Time": "Avg. Processing Time/ Booking",
+            "Avg_Processing_Time": "Avg. Processing Time per Booking",
         }
     )
 
@@ -889,7 +943,7 @@ elif page == "Customer Adoption":
                 "Booking Status",
                 "YTD Bookings",
                 "Last Booking",
-                "Avg. Processing Time",
+                "Avg. Processing Time per Booking",
                 "Remarks",
             ]
         ],
@@ -919,8 +973,8 @@ elif page == "Customer Adoption":
                 width="small",
                 format="DD-MMM-YYYY",
             ),
-            "Avg. Processing Time": st.column_config.NumberColumn(
-                "Avg. Processing Time",
+            "Avg. Processing Time per Booking": st.column_config.NumberColumn(
+                "Avg. Processing Time per Booking",
                 width="medium",
                 format="%.1f min",
             ),
