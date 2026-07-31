@@ -644,7 +644,7 @@ if page == "Overview":
         kpi_card(
             "YTD Bookings",
             f"{metrics['ytd_bookings']}",
-            f"Target achievement: {format_percent(metrics['booking_achievement'], 1)}",
+            f"FY2026 ACTUAL VS TARGET: {format_percent(metrics['booking_achievement'], 1)}",
         )
     with cols[4]:
         kpi_card(
@@ -877,7 +877,7 @@ elif page == "Customer Adoption":
             "YVF Booking Status": "Booking Status",
             "YTD_Bookings": "YTD Bookings",
             "Last_Booking": "Last Booking",
-            "Avg_Processing_Time": "Avg. Processing Time",
+            "Avg_Processing_Time": "Avg. Processing Time/ Booking",
         }
     )
 
