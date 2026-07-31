@@ -565,7 +565,7 @@ if page == "Overview":
         )
     with cols[4]:
         kpi_card(
-            "YTD Bookings via YVF",
+            "YTD Bookings",
             f"{metrics['ytd_bookings']}",
             f"Target achievement: {format_percent(metrics['booking_achievement'], 1)}",
         )
@@ -581,7 +581,7 @@ if page == "Overview":
     left, right = st.columns([1.0, 1.8], gap="medium")
 
     with left:
-        st.markdown('<div class="section-title">PROGRESS TO TARGET</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">TARGET ARCHIVEMENT</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2, gap="small")
         with c1:
             st.plotly_chart(
@@ -605,7 +605,7 @@ if page == "Overview":
             )
 
     with right:
-        st.markdown('<div class="section-title">BOOKING TREND (VIA YVF)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">BOOKING TREND)</div>', unsafe_allow_html=True)
 
         month_axis = pd.date_range("2026-07-01", "2027-03-01", freq="MS")
         monthly_actual = (
@@ -728,7 +728,7 @@ elif page == "Customer Adoption":
     with c3:
         kpi_card("Active Customers", metrics["active"], accent="accent-green")
     with c4:
-        kpi_card("Pending Target", metrics["pending"], accent="accent-amber")
+        kpi_card("Pending onboard", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.6, 1])
@@ -916,7 +916,7 @@ elif page == "Booking Performance":
 
     c1, c2, c3, c4, c5 = st.columns(5, gap="small")
     with c1:
-        kpi_card("Bookings in Selection", total_bookings)
+        kpi_card("Booking volume", total_bookings)
     with c2:
         kpi_card("Active Customers", active_customers, accent="accent-green")
     with c3:
@@ -925,7 +925,7 @@ elif page == "Booking Performance":
         kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
     with c5:
         kpi_card(
-            "Booking Achievement",
+            "Target archivement",
             format_percent(booking_achievement, 1),
             f"{total_bookings} / {BOOKING_TARGET} bookings",
             accent="accent-orange",
@@ -936,7 +936,7 @@ elif page == "Booking Performance":
 
     with left:
         st.markdown(
-            '<div class="section-title">BOOKING TREND BY DATE</div>',
+            '<div class="section-title">DAILY BOOKING VOLUME</div>',
             unsafe_allow_html=True,
         )
 
@@ -996,7 +996,7 @@ elif page == "Booking Performance":
         )
 
     with right:
-        st.markdown('<div class="section-title">BOOKINGS BY MODE</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">BOOKING DISTRIBUTION</div>', unsafe_allow_html=True)
         by_mode = (
             filtered_booking.groupby("Transport Mode", as_index=False)["Bookings"]
             .sum()
@@ -1040,7 +1040,7 @@ elif page == "Booking Performance":
 
     with right:
         st.markdown(
-            '<div class="section-title">PROCESSING TIME BY DATE</div>',
+            '<div class="section-title">AVERAGE PROCESSING TIME</div>',
             unsafe_allow_html=True,
         )
 
