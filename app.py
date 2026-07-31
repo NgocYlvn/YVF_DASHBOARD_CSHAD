@@ -1402,7 +1402,7 @@ else:
     # SUMMARY ROW 1: ISSUES
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">ISSUES SUMMARY</div>',
+        '<div class="section-title">ISSUES</div>',
         unsafe_allow_html=True,
     )
     issue_left, issue_right = st.columns([2.25, 1], gap="medium")
@@ -1445,7 +1445,7 @@ else:
     # SUMMARY ROW 2: IMPROVEMENT PROPOSALS
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">IMPROVEMENT PROPOSALS SUMMARY</div>',
+        '<div class="section-title">IMPROVEMENT PROPOSALS</div>',
         unsafe_allow_html=True,
     )
     proposal_left, proposal_right = st.columns([2.25, 1], gap="medium")
@@ -1488,7 +1488,7 @@ else:
     # SUMMARY ROW 3: FEEDBACK
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">FEEDBACK SUMMARY</div>',
+        '<div class="section-title">FEEDBACK</div>',
         unsafe_allow_html=True,
     )
     feedback_left, feedback_right = st.columns([2.25, 1], gap="medium")
