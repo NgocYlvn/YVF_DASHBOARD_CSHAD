@@ -543,7 +543,7 @@ try:
     metrics = calculate_metrics(customer, booking, onboarded)
 
     # ========================================================
-    # OVERVIEW KPI SOURCE: Dashboard_Overview!A4:K4
+    # OVERVIEW KPI SOURCE: Dashboard_Overview!A4:J4
     # ========================================================
     overview = raw_data["Dashboard_Overview"]
 
@@ -566,19 +566,19 @@ try:
         overview_number(overview, 3, 5, "F4")
     )
     metrics["pending"] = int(
-        overview_number(overview, 3, 6, "G4")
+        overview_number(overview, 3, 5, "F4")
     )
     metrics["ytd_bookings"] = int(
-        overview_number(overview, 3, 7, "H4")
+        overview_number(overview, 3, 6, "G4")
     )
     metrics["avg_time"] = overview_number(
         overview, 3, 8, "I4"
     )
     metrics["onboarding_target"] = int(
-        overview_number(overview, 3, 9, "J4")
+        overview_number(overview, 3, 8, "I4")
     )
     metrics["booking_target"] = int(
-        overview_number(overview, 3, 10, "K4")
+        overview_number(overview, 3, 9, "J4")
     )
 
     # Ratios used by other dashboard elements.
@@ -636,7 +636,7 @@ if page == "Overview":
         )
     with cols[2]:
         kpi_card(
-            "New Onboarded (2026)",
+            "FY2026 Onboarded",
             f"{metrics['new_onboarded']}",
             f"Onboarding rate: {format_percent(metrics['new_rate'])}",
         )
@@ -658,7 +658,7 @@ if page == "Overview":
     left, right = st.columns([1.0, 1.8], gap="medium")
 
     with left:
-        st.markdown('<div class="section-title">TARGET ARCHIVEMENT</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">TARGET ACHIEVEMENT</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2, gap="small")
         with c1:
             st.plotly_chart(
@@ -682,7 +682,7 @@ if page == "Overview":
             )
 
     with right:
-        st.markdown('<div class="section-title">BOOKING TREND)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">BOOKING TREND</div>', unsafe_allow_html=True)
 
         month_axis = pd.date_range("2026-07-01", "2027-03-01", freq="MS")
         monthly_actual = (
@@ -805,7 +805,7 @@ elif page == "Customer Adoption":
     with c3:
         kpi_card("Active Customers", metrics["active"], accent="accent-green")
     with c4:
-        kpi_card("Pending onboard", metrics["pending"], accent="accent-amber")
+        kpi_card("FY2026 Pending", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.6, 1])
@@ -1002,7 +1002,7 @@ elif page == "Booking Performance":
         kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
     with c5:
         kpi_card(
-            "Target archivement",
+            "Target Achievement",
             format_percent(booking_achievement, 1),
             f"{total_bookings} / {metrics['booking_target']} bookings",
             accent="accent-orange",
@@ -1222,22 +1222,22 @@ elif page == "Booking Performance":
 
 
 # ============================================================
-# PAGE 4: ISSUES & IMPROVEMENT
+# PAGE 4: ISSUES & IMPROVEMENTS
 # ============================================================
 else:
-    st.markdown("### Issues & Improvement")
+    st.markdown("### Issues & Improvements")
 
-    open_issues = int(
-        issues["Status"].fillna("").astype(str).str.casefold().eq("open").sum()
-    )
+    # Standardize text columns from the revised source workbook.
+    issues["Status"] = normalize_status(issues.get("Status", pd.Series(dtype=str)))
+    proposals["Status"] = normalize_status(proposals.get("Status", pd.Series(dtype=str)))
+
+    open_issues = int(issues["Status"].str.casefold().eq("open").sum())
     completed_issues = int(
-        issues["Status"].fillna("").astype(str).str.casefold().eq("completed").sum()
+        issues["Status"].str.casefold().isin(["completed", "closed", "resolved"]).sum()
     )
-    open_proposals = int(
-        proposals["Status"].fillna("").astype(str).str.casefold().eq("open").sum()
-    )
+    open_proposals = int(proposals["Status"].str.casefold().eq("open").sum())
     completed_proposals = int(
-        proposals["Status"].fillna("").astype(str).str.casefold().eq("completed").sum()
+        proposals["Status"].str.casefold().isin(["completed", "closed", "implemented"]).sum()
     )
 
     c1, c2, c3, c4 = st.columns(4)
@@ -1251,91 +1251,108 @@ else:
         kpi_card("Completed Improvements", completed_proposals, accent="accent-green")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    left, right = st.columns(2)
+    left, right = st.columns([1, 1], gap="medium")
 
     with left:
-        st.markdown('<div class="section-title">USER ISSUES BY CATEGORY</div>', unsafe_allow_html=True)
-        issue_category = (
-            issues.groupby("Category", as_index=False)
-            .size()
-            .rename(columns={"size": "Issues"})
-            .sort_values("Issues", ascending=True)
+        st.markdown(
+            '<div class="section-title">CURRENT OPEN ISSUES</div>',
+            unsafe_allow_html=True,
         )
-        fig = px.bar(
-            issue_category,
-            x="Issues",
-            y="Category",
-            orientation="h",
-            text="Issues",
-        )
-        fig.update_traces(
-            marker_color="#ed6b21",
-            textposition="outside",
-            cliponaxis=False,
-        )
-        standard_chart_layout(fig, 300)
+        open_issue_table = issues[
+            issues["Status"].str.casefold().eq("open")
+        ].copy()
 
-        fig.update_layout(
-            margin=dict(l=20, r=45, t=35, b=20),
-        )
-
-        fig.update_xaxes(
-            showticklabels=False,
-            showgrid=False,
-            showline=False,
-            ticks="",
-            title_text="",
-            rangemode="tozero",
-        )
-
-        fig.update_yaxes(
-            title_text="",
-            automargin=True,
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={"displayModeBar": False},
-        )
+        if open_issue_table.empty:
+            st.success("No open user issues.")
+        else:
+            st.dataframe(
+                open_issue_table[
+                    ["Date", "Reported By", "Issue", "Feedback Type", "Status"]
+                ].sort_values("Date", ascending=False),
+                hide_index=True,
+                use_container_width=True,
+                height=300,
+                column_config={
+                    "Date": st.column_config.DateColumn(
+                        "Date", format="DD-MMM-YYYY", width="small"
+                    ),
+                    "Reported By": st.column_config.TextColumn(
+                        "Reported By", width="small"
+                    ),
+                    "Issue": st.column_config.TextColumn(
+                        "Issue", width="large"
+                    ),
+                    "Feedback Type": st.column_config.TextColumn(
+                        "Feedback Type", width="small"
+                    ),
+                    "Status": st.column_config.TextColumn(
+                        "Status", width="small"
+                    ),
+                },
+            )
 
     with right:
-        st.markdown('<div class="section-title">PROPOSALS BY PRIORITY</div>', unsafe_allow_html=True)
-        proposal_priority = (
-            proposals.groupby("Priority", as_index=False)
-            .size()
-            .rename(columns={"size": "Proposals"})
+        st.markdown(
+            '<div class="section-title">OPEN IMPROVEMENT PROPOSALS</div>',
+            unsafe_allow_html=True,
         )
-        fig = px.pie(
-            proposal_priority,
-            names="Priority",
-            values="Proposals",
-            hole=0.55,
-        )
-        fig.update_traces(textinfo="label+value")
-        fig.update_layout(
-            height=300,
-            margin=dict(l=20, r=20, t=35, b=20),
-            paper_bgcolor="white",
-            showlegend=False,
-        )
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+        open_proposal_table = proposals[
+            proposals["Status"].str.casefold().eq("open")
+        ].copy()
+
+        if open_proposal_table.empty:
+            st.success("No open improvement proposals.")
+        else:
+            st.dataframe(
+                open_proposal_table[
+                    [
+                        "Proposal Date",
+                        "Submitted By",
+                        "Module",
+                        "Improvement Proposal",
+                        "Status",
+                    ]
+                ].sort_values("Proposal Date", ascending=False),
+                hide_index=True,
+                use_container_width=True,
+                height=300,
+                column_config={
+                    "Proposal Date": st.column_config.DateColumn(
+                        "Proposal Date", format="DD-MMM-YYYY", width="small"
+                    ),
+                    "Submitted By": st.column_config.TextColumn(
+                        "Submitted By", width="small"
+                    ),
+                    "Module": st.column_config.TextColumn(
+                        "Module", width="small"
+                    ),
+                    "Improvement Proposal": st.column_config.TextColumn(
+                        "Improvement Proposal", width="large"
+                    ),
+                    "Status": st.column_config.TextColumn(
+                        "Status", width="small"
+                    ),
+                },
+            )
 
     st.markdown("<br>", unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs(
-        ["User Issues", "Improvement Proposals", "Positive Feedback"]
+        ["All User Issues", "All Improvement Proposals", "Positive Feedback"]
     )
 
     with tab1:
         st.dataframe(
             issues[
-                ["Date", "Customer", "Issue", "Category", "Status"]
+                ["Date", "Reported By", "Issue", "Feedback Type", "Status"]
             ].sort_values(["Status", "Date"], ascending=[False, False]),
             hide_index=True,
             use_container_width=True,
             column_config={
                 "Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+                "Reported By": st.column_config.TextColumn(width="small"),
                 "Issue": st.column_config.TextColumn(width="large"),
+                "Feedback Type": st.column_config.TextColumn(width="small"),
+                "Status": st.column_config.TextColumn(width="small"),
             },
         )
 
@@ -1347,16 +1364,21 @@ else:
                     "Submitted By",
                     "Category",
                     "Module",
+                    "User Impact",
                     "Improvement Proposal",
-                    "Priority",
                     "Status",
                 ]
-            ].sort_values(["Status", "Priority"], ascending=[False, True]),
+            ].sort_values(["Status", "Proposal Date"], ascending=[False, False]),
             hide_index=True,
             use_container_width=True,
             column_config={
                 "Proposal Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
+                "Submitted By": st.column_config.TextColumn(width="small"),
+                "Category": st.column_config.TextColumn(width="small"),
+                "Module": st.column_config.TextColumn(width="small"),
+                "User Impact": st.column_config.TextColumn(width="large"),
                 "Improvement Proposal": st.column_config.TextColumn(width="large"),
+                "Status": st.column_config.TextColumn(width="small"),
             },
         )
 
@@ -1366,19 +1388,21 @@ else:
                 [
                     "Feedback Date",
                     "Customer",
-                    "Positive Feedback",
+                    "Feedback",
                     "Category",
-                    "Business Value",
+                    "Business",
                 ]
             ].sort_values("Feedback Date", ascending=False),
             hide_index=True,
             use_container_width=True,
             column_config={
                 "Feedback Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
-                "Positive Feedback": st.column_config.TextColumn(width="large"),
+                "Customer": st.column_config.TextColumn(width="small"),
+                "Feedback": st.column_config.TextColumn(width="large"),
+                "Category": st.column_config.TextColumn(width="small"),
+                "Business": st.column_config.TextColumn(width="large"),
             },
         )
-
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
