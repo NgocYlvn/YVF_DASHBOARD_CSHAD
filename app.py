@@ -625,7 +625,7 @@ st.markdown(
 # PAGE 1: OVERVIEW
 # ============================================================
 if page == "Overview":
-    cols = st.columns(6, gap="small")
+    cols = st.columns(5, gap="small")
     with cols[0]:
         kpi_card("Eligible Customers", f"{metrics['eligible']}")
     with cols[1]:
@@ -642,18 +642,11 @@ if page == "Overview":
         )
     with cols[3]:
         kpi_card(
-            "Active Customers",
-            f"{metrics['active']}",
-            f"Activation rate: {format_percent(metrics['active_rate'])}",
-            accent="accent-green",
-        )
-    with cols[4]:
-        kpi_card(
             "YTD Bookings",
             f"{metrics['ytd_bookings']}",
             f"Target achievement: {format_percent(metrics['booking_achievement'], 1)}",
         )
-    with cols[5]:
+    with cols[4]:
         kpi_card(
             f"{FY_LABEL} Targets",
             f"{metrics['onboarding_target']} / {metrics['booking_target']}",
@@ -1187,9 +1180,10 @@ elif page == "Booking Performance":
             categoryarray=processing["Date Label"].tolist(),
             tickangle=0,
             title_text="",
-            showticklabels=False,
-            showline=False,
-            ticks="",
+            showticklabels=True,
+            showline=True,
+            ticks="outside",
+            tickfont={"size": 11},
         )
 
         fig.update_yaxes(
