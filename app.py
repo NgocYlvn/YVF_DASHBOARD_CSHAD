@@ -658,7 +658,7 @@ if page == "Overview":
     left, right = st.columns([1.0, 1.8], gap="medium")
 
     with left:
-        st.markdown('<div class="section-title">TARGET ACHIEVEMENT</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">FY2026 ACTUAL Vs TARGET</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2, gap="small")
         with c1:
             st.plotly_chart(
