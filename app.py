@@ -1003,25 +1003,22 @@ elif page == "Booking Performance":
     slowest_processing = processing_series.max()
     slowest_processing = 0 if pd.isna(slowest_processing) else round(float(slowest_processing), 1)
 
-    active_customers = int(filtered_booking["Customer Name"].nunique())
     booking_achievement = safe_divide(total_bookings, metrics["booking_target"])
 
-    c1, c2, c3, c4, c5 = st.columns(5, gap="small")
+    c1, c2, c3, c4 = st.columns(4, gap="small")
     with c1:
         kpi_card("Booking volume", total_bookings)
     with c2:
-        kpi_card("Active Customers", active_customers, accent="accent-green")
-    with c3:
-        kpi_card("Avg. Processing Time", f"{avg_processing:.1f} min")
-    with c4:
-        kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
-    with c5:
         kpi_card(
             "Target Achievement",
             format_percent(booking_achievement, 1),
             f"{total_bookings} / {metrics['booking_target']} bookings",
             accent="accent-orange",
         )
+    with c3:
+        kpi_card("Avg. Processing Time", f"{avg_processing:.1f} min")
+    with c4:
+        kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.55, 1])
