@@ -1023,7 +1023,7 @@ elif page == "Booking Performance":
 
     with left:
         st.markdown(
-            '<div class="section-title">DAILY BOOKING VOLUME</div>',
+            '<div class="section-title">BOOKING VOLUME</div>',
             unsafe_allow_html=True,
         )
 
