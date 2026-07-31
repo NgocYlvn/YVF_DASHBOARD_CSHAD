@@ -682,7 +682,7 @@ if page == "Overview":
             )
 
     with right:
-        st.markdown('<div class="section-title">BOOKING TREND</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">BOOKING TREND)</div>', unsafe_allow_html=True)
 
         month_axis = pd.date_range("2026-07-01", "2027-03-01", freq="MS")
         monthly_actual = (
