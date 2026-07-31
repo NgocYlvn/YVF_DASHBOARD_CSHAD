@@ -227,6 +227,7 @@ def load_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame]:
         "Improvement Proposals": 1,
         "Customer_Feedback": 1,
         "User Issues": 1,
+        "Dashboard_Overview": None,
     }
 
     missing = [s for s in required if s not in excel.sheet_names]
@@ -235,8 +236,20 @@ def load_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame]:
 
     data = {}
     for sheet, header_row in required.items():
-        df = pd.read_excel(excel, sheet_name=sheet, header=header_row)
-        data[sheet] = drop_empty_rows(clean_columns(df))
+        if sheet == "Dashboard_Overview":
+            # Read without a header so iloc[3, 0] corresponds exactly to cell A4.
+            data[sheet] = pd.read_excel(
+                excel,
+                sheet_name=sheet,
+                header=None,
+            )
+        else:
+            df = pd.read_excel(
+                excel,
+                sheet_name=sheet,
+                header=header_row,
+            )
+            data[sheet] = drop_empty_rows(clean_columns(df))
     return data
 
 
@@ -271,6 +284,7 @@ def read_source_file(uploaded_file=None):
         "Improvement Proposals",
         "Customer_Feedback",
         "User Issues",
+        "Dashboard_Overview",
     }
 
     valid_candidates = []
@@ -510,6 +524,27 @@ try:
     raw_data = load_workbook(source_bytes)
     customer, booking, onboarded, proposals, feedback, issues = prepare_data(raw_data)
     metrics = calculate_metrics(customer, booking, onboarded)
+
+    # Override Eligible Customers using Dashboard_Overview!A4.
+    overview_value = pd.to_numeric(
+        raw_data["Dashboard_Overview"].iloc[3, 0],
+        errors="coerce",
+    )
+    if pd.isna(overview_value):
+        raise ValueError(
+            "Dashboard_Overview!A4 must contain a valid number."
+        )
+    metrics["eligible"] = int(overview_value)
+
+    # Recalculate rates that depend on Eligible Customers.
+    metrics["overall_rate"] = safe_divide(
+        metrics["total_onboarded"],
+        metrics["eligible"],
+    )
+    metrics["new_rate"] = safe_divide(
+        metrics["new_onboarded"],
+        metrics["eligible"],
+    )
 except Exception as exc:
     st.error("Không thể đọc dữ liệu nguồn của Dashboard.")
     st.exception(exc)
