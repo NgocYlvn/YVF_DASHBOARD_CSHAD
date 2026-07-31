@@ -128,33 +128,33 @@ st.markdown(
         background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 12px;
-        padding: 0.82rem 0.62rem;
         height: 142px;
         min-height: 142px;
         max-height: 142px;
-        box-sizing: border-box;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(28, 54, 89, 0.05);
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        box-sizing:border-box;
+        overflow:hidden;
+        box-shadow:0 2px 10px rgba(28,54,89,.05);
     }
 
     .kpi-label {
         color: var(--navy);
-        font-size: 0.82rem;
-        font-weight: 750;
-        line-height: 1.2;
-        min-height: 46px;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        text-align: center;
+        font-size:0.88rem;
+        font-weight:700;
+        text-align:center;
+        margin-bottom:18px;
     }
 
     .kpi-value {
-        font-size: 2.05rem;
-        font-weight: 800;
-        color: var(--blue);
-        text-align: center;
-        margin-top: 30px;
+        font-size:2.25rem;
+        font-weight:800;
+        line-height:1;
+        color:var(--blue);
+        text-align:center;
+        margin:0;
     }
 
     .kpi-note {
@@ -357,7 +357,7 @@ def kpi_card(label, value, note="", accent=""):
         <div class="kpi-card {accent}">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
-        </div>
+                    </div>
         """,
         unsafe_allow_html=True,
     )
@@ -1400,7 +1400,7 @@ else:
     # SUMMARY ROW 1: ISSUES
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">ISSUES SUMMARY</div>',
+        '<div class="section-title">ISSUES</div>',
         unsafe_allow_html=True,
     )
     issue_left, issue_right = st.columns([2.25, 1], gap="medium")
@@ -1443,7 +1443,7 @@ else:
     # SUMMARY ROW 2: IMPROVEMENT PROPOSALS
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">IMPROVEMENT PROPOSALS SUMMARY</div>',
+        '<div class="section-title">IMPROVEMENT PROPOSALS</div>',
         unsafe_allow_html=True,
     )
     proposal_left, proposal_right = st.columns([2.25, 1], gap="medium")
@@ -1486,7 +1486,7 @@ else:
     # SUMMARY ROW 3: FEEDBACK
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">FEEDBACK SUMMARY</div>',
+        '<div class="section-title">FEEDBACK</div>',
         unsafe_allow_html=True,
     )
     feedback_left, feedback_right = st.columns([2.25, 1], gap="medium")
