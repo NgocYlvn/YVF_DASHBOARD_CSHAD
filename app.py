@@ -542,9 +542,6 @@ try:
     customer, booking, onboarded, proposals, feedback, issues = prepare_data(raw_data)
     metrics = calculate_metrics(customer, booking, onboarded)
 
-    # Keep the value calculated from Customer_Volume as a fallback.
-    calculated_new_onboarded = metrics["new_onboarded"]
-
     # ========================================================
     # OVERVIEW KPI SOURCE: Dashboard_Overview!A4:K4
     # ========================================================
@@ -559,17 +556,8 @@ try:
     metrics["overall_rate"] = overview_rate(
         overview, 3, 2, "C4"
     )
-    excel_new_onboarded = int(
+    metrics["new_onboarded"] = int(
         overview_number(overview, 3, 3, "D4")
-    )
-
-    # Excel formulas may show the correct value in Excel but keep an old
-    # cached value when read by Streamlit. If D4 is 0, use the value
-    # calculated directly from Customer_Volume.
-    metrics["new_onboarded"] = (
-        calculated_new_onboarded
-        if excel_new_onboarded == 0 and calculated_new_onboarded > 0
-        else excel_new_onboarded
     )
     metrics["new_rate"] = overview_rate(
         overview, 3, 4, "E4"
@@ -654,9 +642,9 @@ if page == "Overview":
         )
     with cols[3]:
         kpi_card(
-            "Active Customers",
-            f"{metrics['active']}",
-            f"Activation rate: {format_percent(metrics['active_rate'])}",
+            "Customer Adoption",
+            f"{format_percent(metrics['active_rate'])}",
+            f"{metrics['active']} Active Customers",
             accent="accent-green",
         )
     with cols[4]:
