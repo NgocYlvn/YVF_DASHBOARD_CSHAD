@@ -647,66 +647,29 @@ if page == "Overview":
             f"FY2026 ACTUAL VS TARGET: {format_percent(metrics['booking_achievement'], 1)}",
         )
     with cols[4]:
-        st.markdown(
-            f"""
-            <div class="kpi-card accent-orange">
-                <div class="kpi-label">{FY_LABEL} Targets</div>
-
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    margin-top:8px;
-                    padding:0 8px;
-                ">
-                    <div style="width:48%; text-align:center;">
-                        <div style="
-                            font-size:1.78rem;
-                            font-weight:800;
-                            line-height:1.1;
-                            color:#ED6B21;
-                        ">
-                            {metrics['onboarding_target']}
-                        </div>
-                        <div style="
-                            margin-top:0.28rem;
-                            font-size:0.71rem;
-                            line-height:1.15;
-                            color:#667085;
-                        ">
-                            Customers
-                        </div>
-                    </div>
-
-                    <div style="
-                        width:1px;
-                        height:44px;
-                        background:#DCE5F0;
-                    "></div>
-
-                    <div style="width:48%; text-align:center;">
-                        <div style="
-                            font-size:1.78rem;
-                            font-weight:800;
-                            line-height:1.1;
-                            color:#ED6B21;
-                        ">
-                            {metrics['booking_target']}
-                        </div>
-                        <div style="
-                            margin-top:0.28rem;
-                            font-size:0.71rem;
-                            line-height:1.15;
-                            color:#667085;
-                        ">
-                            Bookings
-                        </div>
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        targets_html = (
+            f'<div class="kpi-card accent-orange">'
+            f'<div class="kpi-label">{FY_LABEL} Targets</div>'
+            f'<div style="display:flex;justify-content:space-between;'
+            f'align-items:center;margin-top:8px;padding:0 8px;">'
+            f'<div style="width:48%;text-align:center;">'
+            f'<div style="font-size:1.78rem;font-weight:800;line-height:1.1;'
+            f'color:#ED6B21;">{metrics["onboarding_target"]}</div>'
+            f'<div style="margin-top:0.28rem;font-size:0.71rem;line-height:1.15;'
+            f'color:#667085;">Customers</div>'
+            f'</div>'
+            f'<div style="width:1px;height:44px;background:#DCE5F0;"></div>'
+            f'<div style="width:48%;text-align:center;">'
+            f'<div style="font-size:1.78rem;font-weight:800;line-height:1.1;'
+            f'color:#ED6B21;">{metrics["booking_target"]}</div>'
+            f'<div style="margin-top:0.28rem;font-size:0.71rem;line-height:1.15;'
+            f'color:#667085;">Bookings</div>'
+            f'</div>'
+            f'</div>'
+            f'</div>'
         )
+        st.markdown(targets_html, unsafe_allow_html=True)
+
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.0, 1.8], gap="medium")
