@@ -237,7 +237,6 @@ def load_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame]:
     data = {}
     for sheet, header_row in required.items():
         if sheet == "Dashboard_Overview":
-            # Read without a header so iloc[3, 0] corresponds exactly to cell A4.
             data[sheet] = pd.read_excel(
                 excel,
                 sheet_name=sheet,
@@ -333,6 +332,24 @@ def safe_divide(numerator, denominator):
 
 def format_percent(value, decimals=0):
     return f"{value * 100:.{decimals}f}%"
+
+
+def overview_number(overview: pd.DataFrame, row: int, col: int, cell: str):
+    """Read a numeric value from Dashboard_Overview."""
+    value = pd.to_numeric(overview.iloc[row, col], errors="coerce")
+    if pd.isna(value):
+        raise ValueError(
+            f"Dashboard_Overview!{cell} must contain a valid number."
+        )
+    return float(value)
+
+
+def overview_rate(overview: pd.DataFrame, row: int, col: int, cell: str):
+    """Read a percentage stored as either 40%/0.4 or the number 40."""
+    value = overview_number(overview, row, col, cell)
+    if value > 1:
+        value = value / 100
+    return value
 
 
 def kpi_card(label, value, note="", accent=""):
@@ -525,25 +542,57 @@ try:
     customer, booking, onboarded, proposals, feedback, issues = prepare_data(raw_data)
     metrics = calculate_metrics(customer, booking, onboarded)
 
-    # Override Eligible Customers using Dashboard_Overview!A4.
-    overview_value = pd.to_numeric(
-        raw_data["Dashboard_Overview"].iloc[3, 0],
-        errors="coerce",
-    )
-    if pd.isna(overview_value):
-        raise ValueError(
-            "Dashboard_Overview!A4 must contain a valid number."
-        )
-    metrics["eligible"] = int(overview_value)
+    # ========================================================
+    # OVERVIEW KPI SOURCE: Dashboard_Overview!A4:K4
+    # ========================================================
+    overview = raw_data["Dashboard_Overview"]
 
-    # Recalculate rates that depend on Eligible Customers.
-    metrics["overall_rate"] = safe_divide(
-        metrics["total_onboarded"],
-        metrics["eligible"],
+    metrics["eligible"] = int(
+        overview_number(overview, 3, 0, "A4")
     )
-    metrics["new_rate"] = safe_divide(
+    metrics["total_onboarded"] = int(
+        overview_number(overview, 3, 1, "B4")
+    )
+    metrics["overall_rate"] = overview_rate(
+        overview, 3, 2, "C4"
+    )
+    metrics["new_onboarded"] = int(
+        overview_number(overview, 3, 3, "D4")
+    )
+    metrics["new_rate"] = overview_rate(
+        overview, 3, 4, "E4"
+    )
+    metrics["active"] = int(
+        overview_number(overview, 3, 5, "F4")
+    )
+    metrics["pending"] = int(
+        overview_number(overview, 3, 6, "G4")
+    )
+    metrics["ytd_bookings"] = int(
+        overview_number(overview, 3, 7, "H4")
+    )
+    metrics["avg_time"] = overview_number(
+        overview, 3, 8, "I4"
+    )
+    metrics["onboarding_target"] = int(
+        overview_number(overview, 3, 9, "J4")
+    )
+    metrics["booking_target"] = int(
+        overview_number(overview, 3, 10, "K4")
+    )
+
+    # Ratios used by other dashboard elements.
+    metrics["onboarding_achievement"] = safe_divide(
         metrics["new_onboarded"],
-        metrics["eligible"],
+        metrics["onboarding_target"],
+    )
+    metrics["booking_achievement"] = safe_divide(
+        metrics["ytd_bookings"],
+        metrics["booking_target"],
+    )
+    metrics["active_rate"] = safe_divide(
+        metrics["active"],
+        metrics["total_onboarded"],
     )
 except Exception as exc:
     st.error("Không thể đọc dữ liệu nguồn của Dashboard.")
@@ -668,7 +717,7 @@ if page == "Overview":
             textposition="outside",
             cliponaxis=False,
         )
-        monthly_target = BOOKING_TARGET / 12
+        monthly_target = metrics["booking_target"] / 12
         fig.add_hline(
             y=monthly_target,
             line_dash="dash",
@@ -947,7 +996,7 @@ elif page == "Booking Performance":
     slowest_processing = 0 if pd.isna(slowest_processing) else round(float(slowest_processing), 1)
 
     active_customers = int(filtered_booking["Customer Name"].nunique())
-    booking_achievement = safe_divide(total_bookings, BOOKING_TARGET)
+    booking_achievement = safe_divide(total_bookings, metrics["booking_target"])
 
     c1, c2, c3, c4, c5 = st.columns(5, gap="small")
     with c1:
@@ -962,7 +1011,7 @@ elif page == "Booking Performance":
         kpi_card(
             "Target archivement",
             format_percent(booking_achievement, 1),
-            f"{total_bookings} / {BOOKING_TARGET} bookings",
+            f"{total_bookings} / {metrics['booking_target']} bookings",
             accent="accent-orange",
         )
 
