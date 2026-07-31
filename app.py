@@ -814,14 +814,12 @@ elif page == "Customer Adoption":
 
     filtered_customer = customer[customer["YVF Status"].isin(selected_status)].copy()
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     with c1:
         kpi_card("Eligible Customers", metrics["eligible"])
     with c2:
         kpi_card("Total Onboarded", metrics["total_onboarded"])
     with c3:
-        kpi_card("Active Customers", metrics["active"], accent="accent-green")
-    with c4:
         kpi_card("FY2026 Pending", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
