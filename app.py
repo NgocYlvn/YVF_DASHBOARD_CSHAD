@@ -150,12 +150,11 @@ st.markdown(
     }
 
     .kpi-value {
-        font-size: 1.78rem;
+        font-size: 2.05rem;
         font-weight: 800;
-        line-height: 1.1;
         color: var(--blue);
-        margin-top: 0.35rem;
         text-align: center;
+        margin-top: 30px;
     }
 
     .kpi-note {
@@ -358,7 +357,6 @@ def kpi_card(label, value, note="", accent=""):
         <div class="kpi-card {accent}">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
-            <div class="kpi-note">{note}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1402,7 +1400,7 @@ else:
     # SUMMARY ROW 1: ISSUES
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">ISSUES</div>',
+        '<div class="section-title">ISSUES SUMMARY</div>',
         unsafe_allow_html=True,
     )
     issue_left, issue_right = st.columns([2.25, 1], gap="medium")
@@ -1445,7 +1443,7 @@ else:
     # SUMMARY ROW 2: IMPROVEMENT PROPOSALS
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">IMPROVEMENT PROPOSALS</div>',
+        '<div class="section-title">IMPROVEMENT PROPOSALS SUMMARY</div>',
         unsafe_allow_html=True,
     )
     proposal_left, proposal_right = st.columns([2.25, 1], gap="medium")
@@ -1488,7 +1486,7 @@ else:
     # SUMMARY ROW 3: FEEDBACK
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">FEEDBACK</div>',
+        '<div class="section-title">FEEDBACK SUMMARY</div>',
         unsafe_allow_html=True,
     )
     feedback_left, feedback_right = st.columns([2.25, 1], gap="medium")
