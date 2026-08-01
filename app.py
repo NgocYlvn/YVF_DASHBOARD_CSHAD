@@ -887,8 +887,18 @@ elif page == "Customer Adoption":
             use_container_width=True,
             height=520,
             column_config={
+                "Customer Name": st.column_config.TextColumn(
+                    "Customer Name",
+                    width="medium",
+                ),
                 "Total Volume": st.column_config.NumberColumn(
-                    "Export HBL Volume", format="%d"
+                    "Export HBL Volume",
+                    format="%d",
+                    width="small",
+                ),
+                "YVF Status": st.column_config.TextColumn(
+                    "YVF Status",
+                    width="medium",
                 ),
             },
         )
@@ -1297,27 +1307,6 @@ else:
     st.markdown(
         """
         <style>
-        .record-summary-header {
-            display: grid;
-            grid-template-columns: 1.35fr 1fr 1fr 1fr;
-            gap: 12px;
-            align-items: center;
-            margin: 0.25rem 0 0.55rem 0;
-        }
-
-        .record-summary-header div {
-            color: #083B82;
-            font-size: 0.82rem;
-            font-weight: 800;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .record-summary-header div:first-child {
-            text-align: left;
-        }
-
         .record-row-label {
             background: #EEF4FC;
             border-left: 5px solid #0B63CE;
@@ -1441,19 +1430,30 @@ else:
     # --------------------------------------------------------
     # MANAGEMENT SUMMARY MATRIX
     # --------------------------------------------------------
-    st.markdown(
-        """
-        <div class="record-summary-header">
-            <div>Record Type</div>
-            <div>Total</div>
-            <div>Completed</div>
-            <div>Open</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     summary_left, summary_right = st.columns([4.2, 1.15], gap="medium")
+
+    def summary_header():
+        # Use the same Streamlit column ratios and gap as the KPI rows.
+        # This keeps every heading exactly centered above its KPI card.
+        header = st.columns([1.35, 1, 1, 1], gap="small")
+        labels = ["Record Type", "Total", "Completed", "Open"]
+        for index, (column, label) in enumerate(zip(header, labels)):
+            with column:
+                alignment = "left" if index == 0 else "center"
+                st.markdown(
+                    f"""
+                    <div style="
+                        color:#083B82;
+                        font-size:0.82rem;
+                        font-weight:800;
+                        text-align:{alignment};
+                        text-transform:uppercase;
+                        letter-spacing:0.04em;
+                        padding:0 0 0.55rem 0;
+                    ">{label}</div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
     def summary_row(label, note, total, completed, open_count):
         row = st.columns([1.35, 1, 1, 1], gap="small")
@@ -1499,6 +1499,7 @@ else:
             )
 
     with summary_left:
+        summary_header()
         summary_row(
             "Total Records",
             "Feedback and improvement proposals",
