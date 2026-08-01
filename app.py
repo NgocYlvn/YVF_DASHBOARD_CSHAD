@@ -1179,7 +1179,7 @@ elif page == "Booking Performance":
 
     with right:
         st.markdown(
-            '<div class="section-title">AVERAGE PROCESSING TIME</div>',
+            '<div class="section-title">AVERAGE PROCESSING TIME/ BOOKING</div>',
             unsafe_allow_html=True,
         )
 
