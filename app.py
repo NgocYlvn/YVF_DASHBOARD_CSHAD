@@ -29,7 +29,7 @@ NAV_ITEMS = [
     "Overview",
     "Customer Adoption",
     "Booking Performance",
-    "Feedback & Improvements",
+    "Issues & Improvements",
 ]
 
 
@@ -169,6 +169,55 @@ st.markdown(
     .accent-green .kpi-value { color: var(--green); }
     .accent-amber .kpi-value { color: var(--amber); }
     .accent-red .kpi-value { color: var(--red); }
+
+    .target-card {
+        padding: 0 12px;
+    }
+
+    .target-card .kpi-label {
+        margin-bottom: 14px;
+    }
+
+    .target-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+        align-items: center;
+        justify-items: stretch;
+        column-gap: 12px;
+    }
+
+    .target-item {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .target-value {
+        color: var(--orange);
+        font-size: 1.9rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .target-caption {
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.15;
+        margin-top: 0.4rem;
+        white-space: nowrap;
+    }
+
+    .target-divider {
+        width: 1px;
+        height: 52px;
+        background: var(--line);
+        justify-self: center;
+    }
 
     div[data-testid="stDataFrame"] {
         border: 1px solid var(--line);
@@ -406,19 +455,13 @@ def prepare_data(data):
             df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 
     feedback["Feedback Type"] = normalize_status(
-        feedback.get(
-            "Feedback Type",
-            pd.Series(index=feedback.index, dtype=str),
-        )
+        feedback.get("Feedback Type", pd.Series(index=feedback.index, dtype=str))
     )
     feedback["Status"] = normalize_status(
-        feedback.get(
-            "Status",
-            pd.Series(index=feedback.index, dtype=str),
-        )
+        feedback.get("Status", pd.Series(index=feedback.index, dtype=str))
     )
 
-    # Issues are derived from negative feedback in the merged Feedback sheet.
+    # Negative feedback is treated as a user issue for management follow-up.
     issues = feedback[
         feedback["Feedback Type"].str.casefold().eq("negative")
     ].copy()
@@ -584,7 +627,7 @@ try:
         overview_number(overview, 3, 6, "G4")
     )
     metrics["avg_time"] = overview_number(
-        overview, 3, 8, "I4"
+        overview, 3, 7, "H4"
     )
     metrics["onboarding_target"] = int(
         overview_number(overview, 3, 8, "I4")
@@ -659,27 +702,22 @@ if page == "Overview":
             f"FY2026 ACTUAL VS TARGET: {format_percent(metrics['booking_achievement'], 1)}",
         )
     with cols[4]:
-        targets_html = (
-            f'<div class="kpi-card accent-orange">'
-            f'<div class="kpi-label">{FY_LABEL} Targets</div>'
-            f'<div style="display:flex;justify-content:space-between;'
-            f'align-items:center;margin-top:8px;padding:0 8px;">'
-            f'<div style="width:48%;text-align:center;">'
-            f'<div style="font-size:1.78rem;font-weight:800;line-height:1.1;'
-            f'color:#ED6B21;">{metrics["onboarding_target"]}</div>'
-            f'<div style="margin-top:0.28rem;font-size:0.71rem;line-height:1.15;'
-            f'color:#667085;">Customers</div>'
-            f'</div>'
-            f'<div style="width:1px;height:44px;background:#DCE5F0;"></div>'
-            f'<div style="width:48%;text-align:center;">'
-            f'<div style="font-size:1.78rem;font-weight:800;line-height:1.1;'
-            f'color:#ED6B21;">{metrics["booking_target"]}</div>'
-            f'<div style="margin-top:0.28rem;font-size:0.71rem;line-height:1.15;'
-            f'color:#667085;">Bookings</div>'
-            f'</div>'
-            f'</div>'
-            f'</div>'
-        )
+        targets_html = f"""
+        <div class="kpi-card target-card">
+            <div class="kpi-label">{FY_LABEL} Targets</div>
+            <div class="target-grid">
+                <div class="target-item">
+                    <div class="target-value">{metrics["onboarding_target"]}</div>
+                    <div class="target-caption">Customers</div>
+                </div>
+                <div class="target-divider"></div>
+                <div class="target-item">
+                    <div class="target-value">{metrics["booking_target"]}</div>
+                    <div class="target-caption">Bookings</div>
+                </div>
+            </div>
+        </div>
+        """
         st.markdown(targets_html, unsafe_allow_html=True)
 
 
@@ -739,12 +777,12 @@ if page == "Overview":
             textposition="outside",
             cliponaxis=False,
         )
-        monthly_target = metrics["booking_target"] / 12
+        monthly_target = round(metrics["booking_target"] / 12)
         fig.add_hline(
             y=monthly_target,
             line_dash="dash",
             line_color="#ed6b21",
-            annotation_text=f"Monthly target: {monthly_target:.1f}",
+            annotation_text=f"Monthly target: {monthly_target}",
             annotation_position="top right",
         )
         standard_chart_layout(fig, 300)
@@ -832,7 +870,7 @@ elif page == "Customer Adoption":
     with c2:
         kpi_card("Total Onboarded", metrics["total_onboarded"])
     with c3:
-        kpi_card("FY2026 Pending", metrics["pending"], accent="accent-amber")
+        kpi_card("Pending Onboard", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.6, 1])
@@ -1246,12 +1284,12 @@ elif page == "Booking Performance":
 
 
 # ============================================================
-# PAGE 4: FEEDBACK & IMPROVEMENTS
+# PAGE 4: ISSUES & IMPROVEMENTS
 # ============================================================
 else:
-    st.markdown("### Feedback & Improvements")
+    st.markdown("### Issues & Improvements")
     st.caption(
-        "Internal overview of user feedback, open issues, and improvement progress."
+        "Track issue resolution, improvement progress, and customer feedback."
     )
 
     # --------------------------------------------------------
@@ -1277,8 +1315,15 @@ else:
     )
 
     feedback_type = feedback["Feedback Type"].str.casefold()
+    issue_status = issues["Status"].str.casefold()
     proposal_status = proposals["Status"].str.casefold()
 
+    completed_issue_statuses = {
+        "completed",
+        "closed",
+        "resolved",
+        "done",
+    }
     implemented_proposal_statuses = {
         "implemented",
         "completed",
@@ -1286,57 +1331,60 @@ else:
         "done",
     }
 
-    positive_table = feedback[
-        feedback_type.eq("positive")
-    ].copy()
-
-    negative_table = feedback[
-        feedback_type.eq("negative")
-    ].copy()
-
-    total_feedback = int(len(feedback))
-    positive_feedback = int(len(positive_table))
-    negative_feedback = int(len(negative_table))
+    # --------------------------------------------------------
+    # KPI CALCULATIONS
+    # --------------------------------------------------------
+    total_issues = int(len(issues))
+    completed_issues = int(
+        issue_status.isin(completed_issue_statuses).sum()
+    )
+    open_issues = max(total_issues - completed_issues, 0)
 
     total_proposals = int(len(proposals))
     implemented_proposals = int(
-        proposal_status.isin(
-            implemented_proposal_statuses
-        ).sum()
+        proposal_status.isin(implemented_proposal_statuses).sum()
     )
     open_proposals = max(
         total_proposals - implemented_proposals,
         0,
     )
 
+    total_feedback = int(len(feedback))
+    positive_feedback = int(feedback_type.eq("positive").sum())
+    negative_feedback = int(feedback_type.eq("negative").sum())
+
+    # Keep any new/unclassified feedback visible in the total.
     classified_feedback = positive_feedback + negative_feedback
-    other_feedback = max(
-        total_feedback - classified_feedback,
-        0,
+    other_feedback = max(total_feedback - classified_feedback, 0)
+
+    issue_completion_rate = safe_divide(
+        completed_issues,
+        total_issues,
+    )
+    proposal_implementation_rate = safe_divide(
+        implemented_proposals,
+        total_proposals,
+    )
+    positive_feedback_rate = safe_divide(
+        positive_feedback,
+        total_feedback,
+    )
+    negative_feedback_rate = safe_divide(
+        negative_feedback,
+        total_feedback,
     )
 
     # --------------------------------------------------------
-    # DONUT CHART
+    # SMALL DONUT CHART
     # --------------------------------------------------------
-    def feedback_donut():
-        labels = ["Positive", "Negative"]
-        values = [positive_feedback, negative_feedback]
-        colors = ["#169B62", "#ED6B21"]
-
-        if other_feedback > 0:
-            labels.append("Other")
-            values.append(other_feedback)
-            colors.append("#667085")
-
+    def status_donut(labels, values, title, colors=None):
         chart_data = pd.DataFrame(
             {
-                "Feedback Type": labels,
+                "Status": labels,
                 "Count": values,
             }
         )
-        chart_data = chart_data[
-            chart_data["Count"] > 0
-        ]
+        chart_data = chart_data[chart_data["Count"] > 0]
 
         if chart_data.empty:
             fig = go.Figure()
@@ -1345,45 +1393,33 @@ else:
                 x=0.5,
                 y=0.5,
                 showarrow=False,
-                font={
-                    "size": 16,
-                    "color": "#667085",
-                },
+                font={"size": 16, "color": "#667085"},
             )
         else:
             fig = px.pie(
                 chart_data,
-                names="Feedback Type",
+                names="Status",
                 values="Count",
                 hole=0.58,
             )
-            fig.update_traces(
-                textposition="inside",
-                textinfo="percent",
-                hovertemplate=(
-                    "%{label}: %{value}"
-                    "<extra></extra>"
-                ),
-                marker={"colors": colors},
-            )
+            trace_settings = {
+                "textposition": "inside",
+                "textinfo": "percent",
+                "hovertemplate": "%{label}: %{value}<extra></extra>",
+            }
+            if colors:
+                trace_settings["marker"] = {"colors": colors}
+            fig.update_traces(**trace_settings)
 
         fig.update_layout(
             title={
-                "text": "FEEDBACK DISTRIBUTION",
+                "text": title,
                 "x": 0.02,
                 "xanchor": "left",
-                "font": {
-                    "size": 14,
-                    "color": "#083B82",
-                },
+                "font": {"size": 14, "color": "#083B82"},
             },
-            height=230,
-            margin=dict(
-                l=5,
-                r=5,
-                t=42,
-                b=5,
-            ),
+            height=205,
+            margin=dict(l=5, r=5, t=40, b=5),
             paper_bgcolor="white",
             showlegend=True,
             legend=dict(
@@ -1398,381 +1434,353 @@ else:
         return fig
 
     # --------------------------------------------------------
-    # USER FEEDBACK SUMMARY
+    # SUMMARY ROW 1: ISSUES
     # --------------------------------------------------------
     st.markdown(
-        '<div class="section-title">USER FEEDBACK</div>',
+        '<div class="section-title">ISSUES</div>',
         unsafe_allow_html=True,
     )
+    issue_left, issue_right = st.columns([2.25, 1], gap="medium")
 
-    summary_left, summary_right = st.columns(
-        [2.25, 1],
-        gap="medium",
-    )
-
-    with summary_left:
-        f1, f2, f3 = st.columns(
-            3,
-            gap="small",
-        )
-
-        with f1:
+    with issue_left:
+        i1, i2, i3 = st.columns(3, gap="small")
+        with i1:
+            kpi_card("Total Issues", total_issues)
+        with i2:
             kpi_card(
-                "Total Feedback",
-                total_feedback,
-            )
-
-        with f2:
-            kpi_card(
-                "Positive Feedback",
-                positive_feedback,
+                "Completed",
+                completed_issues,
                 accent="accent-green",
             )
-
-        with f3:
+        with i3:
             kpi_card(
-                "Negative Feedback",
-                negative_feedback,
+                "Open",
+                open_issues,
                 accent="accent-orange",
             )
 
-    with summary_right:
+    with issue_right:
         st.plotly_chart(
-            feedback_donut(),
+            status_donut(
+                ["Completed", "Open"],
+                [completed_issues, open_issues],
+                "ISSUES STATUS",
+                ["#169B62", "#ED6B21"],
+            ),
             use_container_width=True,
             config={"displayModeBar": False},
         )
 
     # --------------------------------------------------------
-    # NEGATIVE FEEDBACK + POSITIVE HIGHLIGHTS
+    # SUMMARY ROW 2: IMPROVEMENT PROPOSALS
+    # --------------------------------------------------------
+    st.markdown(
+        '<div class="section-title">IMPROVEMENT PROPOSALS</div>',
+        unsafe_allow_html=True,
+    )
+    proposal_left, proposal_right = st.columns([2.25, 1], gap="medium")
+
+    with proposal_left:
+        p1, p2, p3 = st.columns(3, gap="small")
+        with p1:
+            kpi_card("Total Proposals", total_proposals)
+        with p2:
+            kpi_card(
+                "Implemented",
+                implemented_proposals,
+                accent="accent-green",
+            )
+        with p3:
+            kpi_card(
+                "Open",
+                open_proposals,
+                accent="accent-orange",
+            )
+
+    with proposal_right:
+        st.plotly_chart(
+            status_donut(
+                ["Implemented", "Open"],
+                [implemented_proposals, open_proposals],
+                "PROPOSALS STATUS",
+                ["#169B62", "#ED6B21"],
+            ),
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
+
+    # --------------------------------------------------------
+    # SUMMARY ROW 3: FEEDBACK — DIRECTLY FROM FEEDBACK SHEET
+    # --------------------------------------------------------
+    st.markdown(
+        '<div class="section-title">FEEDBACK</div>',
+        unsafe_allow_html=True,
+    )
+    feedback_left, feedback_right = st.columns([2.25, 1], gap="medium")
+
+    with feedback_left:
+        f1, f2, f3 = st.columns(3, gap="small")
+        with f1:
+            kpi_card("Total Feedback", total_feedback)
+        with f2:
+            kpi_card(
+                "Positive",
+                positive_feedback,
+                accent="accent-green",
+            )
+        with f3:
+            kpi_card(
+                "Negative",
+                negative_feedback,
+                accent="accent-orange",
+            )
+
+    with feedback_right:
+        feedback_labels = ["Positive", "Negative"]
+        feedback_values = [positive_feedback, negative_feedback]
+        feedback_colors = ["#169B62", "#ED6B21"]
+
+        if other_feedback > 0:
+            feedback_labels.append("Other")
+            feedback_values.append(other_feedback)
+            feedback_colors.append("#667085")
+
+        st.plotly_chart(
+            status_donut(
+                feedback_labels,
+                feedback_values,
+                "FEEDBACK OVERVIEW",
+                feedback_colors,
+            ),
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
+
+    # --------------------------------------------------------
+    # OPEN ITEMS TABLES
     # --------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
+    table_left, table_right = st.columns(2, gap="medium")
 
-    negative_col, positive_col = st.columns(
-        [1.15, 1],
-        gap="medium",
+    issue_open_mask = ~issue_status.isin(
+        completed_issue_statuses
     )
+    open_issue_table = issues[issue_open_mask].copy()
 
-    with negative_col:
+    proposal_open_mask = ~proposal_status.isin(
+        implemented_proposal_statuses
+    )
+    open_proposal_table = proposals[
+        proposal_open_mask
+    ].copy()
+
+    with table_left:
         st.markdown(
-            '<div class="section-title">'
-            'NEGATIVE FEEDBACK'
-            '</div>',
+            '<div class="section-title">OPEN ISSUES</div>',
             unsafe_allow_html=True,
         )
 
-        if negative_table.empty:
-            st.success(
-                "No negative feedback recorded."
-            )
+        if open_issue_table.empty:
+            st.success("No open user issues.")
         else:
-            negative_columns = [
+            issue_columns = [
                 column
                 for column in [
                     "Date",
                     "Reported By",
-                    "Feedback",
+                    "Issue",
+                    "Feedback Type",
                     "Status",
                 ]
-                if column in negative_table.columns
+                if column in open_issue_table.columns
             ]
 
             st.dataframe(
-                negative_table[
-                    negative_columns
-                ].sort_values(
+                open_issue_table[issue_columns].sort_values(
                     "Date",
                     ascending=False,
                 ),
                 hide_index=True,
                 use_container_width=True,
-                height=285,
+                height=330,
                 column_config={
-                    "Date": (
-                        st.column_config.DateColumn(
-                            "Date",
-                            format="DD-MMM-YYYY",
-                            width="small",
-                        )
+                    "Date": st.column_config.DateColumn(
+                        "Reported Date",
+                        format="DD-MMM-YYYY",
+                        width="small",
                     ),
-                    "Reported By": (
-                        st.column_config.TextColumn(
-                            "Reported By",
-                            width="small",
-                        )
+                    "Reported By": st.column_config.TextColumn(
+                        "Reported By",
+                        width="small",
                     ),
-                    "Feedback": (
-                        st.column_config.TextColumn(
-                            "Feedback",
-                            width="large",
-                        )
+                    "Issue": st.column_config.TextColumn(
+                        "Issue",
+                        width="large",
                     ),
-                    "Status": (
-                        st.column_config.TextColumn(
-                            "Status",
-                            width="small",
-                        )
+                    "Feedback Type": st.column_config.TextColumn(
+                        "Type",
+                        width="small",
+                    ),
+                    "Status": st.column_config.TextColumn(
+                        "Status",
+                        width="small",
                     ),
                 },
             )
 
-    with positive_col:
+    with table_right:
         st.markdown(
-            """
-            <div class="section-title"
-                 style="background:#0B6B46;">
-                POSITIVE HIGHLIGHTS
-            </div>
-            """,
+            '<div class="section-title">OPEN IMPROVEMENT PROPOSALS</div>',
             unsafe_allow_html=True,
         )
 
-        if positive_table.empty:
-            st.info(
-                "No positive feedback recorded."
-            )
+        if open_proposal_table.empty:
+            st.success("No open improvement proposals.")
         else:
-            positive_display = positive_table.sort_values(
-                "Date",
-                ascending=False,
-            ).head(3)
+            proposal_columns = [
+                column
+                for column in [
+                    "Proposal Date",
+                    "Module",
+                    "Improvement Proposal",
+                    "User Impact",
+                    "Status",
+                ]
+                if column in open_proposal_table.columns
+            ]
 
-            highlight_html = """
-            <div style="
-                background:#FFFFFF;
-                border:1px solid #DCE5F0;
-                border-top:none;
-                border-radius:0 0 10px 10px;
-                padding:18px;
-                min-height:285px;
-                box-sizing:border-box;
-            ">
-            """
-
-            for _, row in positive_display.iterrows():
-                feedback_text = str(
-                    row.get("Feedback", "")
-                ).strip()
-                reported_by = str(
-                    row.get("Reported By", "")
-                ).strip()
-                status_text = str(
-                    row.get("Status", "")
-                ).strip()
-
-                feedback_date = row.get("Date")
-                if pd.notna(feedback_date):
-                    date_text = pd.to_datetime(
-                        feedback_date
-                    ).strftime("%d-%b-%Y")
-                else:
-                    date_text = ""
-
-                highlight_html += f"""
-                <div style="
-                    background:#F3FBF7;
-                    border:1px solid #BFE3D1;
-                    border-left:5px solid #169B62;
-                    border-radius:8px;
-                    padding:16px 18px;
-                    margin-bottom:12px;
-                ">
-                    <div style="
-                        font-size:1.7rem;
-                        line-height:1;
-                        color:#169B62;
-                        font-weight:800;
-                        margin-bottom:8px;
-                    ">“</div>
-                    <div style="
-                        color:#172033;
-                        font-size:0.93rem;
-                        line-height:1.45;
-                        font-weight:600;
-                    ">
-                        {feedback_text}
-                    </div>
-                    <div style="
-                        margin-top:13px;
-                        color:#667085;
-                        font-size:0.76rem;
-                        line-height:1.4;
-                    ">
-                        <b>Reported by:</b> {reported_by}
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        <b>Date:</b> {date_text}
-                        {
-                            f'&nbsp;&nbsp;|&nbsp;&nbsp;<b>Category:</b> {status_text}'
-                            if status_text else ''
-                        }
-                    </div>
-                </div>
-                """
-
-            highlight_html += """
-                <div style="
-                    color:#169B62;
-                    font-size:0.76rem;
-                    margin-top:4px;
-                ">
-                    Positive feedback highlights strengths in the user experience.
-                </div>
-            </div>
-            """
-
-            st.markdown(
-                highlight_html,
-                unsafe_allow_html=True,
+            st.dataframe(
+                open_proposal_table[proposal_columns].sort_values(
+                    "Proposal Date",
+                    ascending=False,
+                ),
+                hide_index=True,
+                use_container_width=True,
+                height=330,
+                column_config={
+                    "Proposal Date": st.column_config.DateColumn(
+                        "Proposal Date",
+                        format="DD-MMM-YYYY",
+                        width="small",
+                    ),
+                    "Module": st.column_config.TextColumn(
+                        "Module / Area",
+                        width="small",
+                    ),
+                    "Improvement Proposal": st.column_config.TextColumn(
+                        "Improvement Proposal",
+                        width="large",
+                    ),
+                    "User Impact": st.column_config.TextColumn(
+                        "Impact",
+                        width="medium",
+                    ),
+                    "Status": st.column_config.TextColumn(
+                        "Status",
+                        width="small",
+                    ),
+                },
             )
 
     # --------------------------------------------------------
-    # OPEN IMPROVEMENT PROPOSALS
+    # COMPLETE DETAILS
     # --------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(
-        '<div class="section-title">'
-        'OPEN IMPROVEMENT PROPOSALS'
-        '</div>',
-        unsafe_allow_html=True,
+    tab1, tab2 = st.tabs(
+        [
+            "Feedback",
+            "Improvement Proposals",
+        ]
     )
 
-    open_proposal_table = proposals[
-        ~proposal_status.isin(
-            implemented_proposal_statuses
-        )
-    ].copy()
-
-    if open_proposal_table.empty:
-        st.success(
-            "No open improvement proposals."
-        )
-    else:
-        proposal_columns = [
+    with tab1:
+        feedback_columns = [
             column
             for column in [
-                "Proposal Date",
-                "Module",
-                "Improvement Proposal",
-                "User Impact",
+                "Date",
+                "Reported By",
+                "Issue",
+                "Feedback Type",
                 "Status",
             ]
-            if column in open_proposal_table.columns
+            if column in feedback.columns
         ]
 
         st.dataframe(
-            open_proposal_table[
-                proposal_columns
-            ].sort_values(
-                "Proposal Date",
+            feedback[feedback_columns].sort_values(
+                "Date",
                 ascending=False,
             ),
             hide_index=True,
             use_container_width=True,
-            height=300,
             column_config={
-                "Proposal Date": (
-                    st.column_config.DateColumn(
-                        "Proposal Date",
-                        format="DD-MMM-YYYY",
-                        width="small",
-                    )
+                "Date": st.column_config.DateColumn(
+                    "Date",
+                    format="DD-MMM-YYYY",
+                    width="small",
                 ),
-                "Module": (
-                    st.column_config.TextColumn(
-                        "Module / Area",
-                        width="small",
-                    )
+                "Reported By": st.column_config.TextColumn(
+                    "Reported By",
+                    width="small",
                 ),
-                "Improvement Proposal": (
-                    st.column_config.TextColumn(
-                        "Improvement Proposal",
-                        width="large",
-                    )
+                "Issue": st.column_config.TextColumn(
+                    "Feedback",
+                    width="large",
                 ),
-                "User Impact": (
-                    st.column_config.TextColumn(
-                        "Impact",
-                        width="medium",
-                    )
+                "Feedback Type": st.column_config.TextColumn(
+                    "Feedback Type",
+                    width="small",
                 ),
-                "Status": (
-                    st.column_config.TextColumn(
-                        "Status",
-                        width="small",
-                    )
+                "Status": st.column_config.TextColumn(
+                    "Status / Category",
+                    width="small",
                 ),
             },
         )
 
-    # --------------------------------------------------------
-    # FEEDBACK RECORDS
-    # --------------------------------------------------------
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(
-        '<div class="section-title">'
-        'FEEDBACK RECORDS'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-
-    feedback_columns = [
-        column
-        for column in [
-            "Date",
-            "Reported By",
-            "Feedback",
-            "Feedback Type",
-            "Status",
+    with tab2:
+        proposal_detail_columns = [
+            column
+            for column in [
+                "Proposal Date",
+                "Submitted By",
+                "Category",
+                "Module",
+                "User Impact",
+                "Improvement Proposal",
+                "Status",
+            ]
+            if column in proposals.columns
         ]
-        if column in feedback.columns
-    ]
 
-    if feedback.empty:
-        st.info(
-            "No feedback records available."
-        )
-    else:
         st.dataframe(
-            feedback[
-                feedback_columns
-            ].sort_values(
-                "Date",
+            proposals[proposal_detail_columns].sort_values(
+                "Proposal Date",
                 ascending=False,
             ),
             hide_index=True,
             use_container_width=True,
-            height=360,
             column_config={
-                "Date": (
-                    st.column_config.DateColumn(
-                        "Date",
-                        format="DD-MMM-YYYY",
-                        width="small",
-                    )
+                "Proposal Date": st.column_config.DateColumn(
+                    format="DD-MMM-YYYY"
                 ),
-                "Reported By": (
-                    st.column_config.TextColumn(
-                        "Reported By",
-                        width="small",
-                    )
+                "Submitted By": st.column_config.TextColumn(
+                    width="small"
                 ),
-                "Feedback": (
-                    st.column_config.TextColumn(
-                        "Feedback",
-                        width="large",
-                    )
+                "Category": st.column_config.TextColumn(
+                    width="small"
                 ),
-                "Feedback Type": (
-                    st.column_config.TextColumn(
-                        "Feedback Type",
-                        width="small",
-                    )
+                "Module": st.column_config.TextColumn(
+                    width="small"
                 ),
-                "Status": (
-                    st.column_config.TextColumn(
-                        "Status",
-                        width="small",
-                    )
+                "User Impact": st.column_config.TextColumn(
+                    width="large"
+                ),
+                "Improvement Proposal": st.column_config.TextColumn(
+                    width="large"
+                ),
+                "Status": st.column_config.TextColumn(
+                    width="small"
                 ),
             },
         )
