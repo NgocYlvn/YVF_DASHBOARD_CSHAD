@@ -1576,7 +1576,7 @@ else:
 
     with table_left:
         st.markdown(
-            '<div class="section-title">OPEN ISSUES</div>',
+            f'<div class="section-title">OPEN ISSUES ({open_issues})</div>',
             unsafe_allow_html=True,
         )
 
@@ -1588,7 +1588,7 @@ else:
                 for column in [
                     "Date",
                     "Reported By",
-                    "Issue",
+                    "Feedback",
                     "Feedback Type",
                     "Status",
                 ]
@@ -1613,8 +1613,8 @@ else:
                         "Reported By",
                         width="small",
                     ),
-                    "Issue": st.column_config.TextColumn(
-                        "Issue",
+                    "Feedback": st.column_config.TextColumn(
+                        "Feedback",
                         width="large",
                     ),
                     "Feedback Type": st.column_config.TextColumn(
@@ -1630,7 +1630,7 @@ else:
 
     with table_right:
         st.markdown(
-            '<div class="section-title">OPEN IMPROVEMENT PROPOSALS</div>',
+            f'<div class="section-title">OPEN IMPROVEMENT PROPOSALS ({open_proposals})</div>',
             unsafe_allow_html=True,
         )
 
@@ -1683,29 +1683,29 @@ else:
             )
 
     # --------------------------------------------------------
-    # COMPLETE DETAILS
+    # RECORDS — ALL FEEDBACK FROM THE SOURCE SHEET
     # --------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
-    tab1, tab2 = st.tabs(
-        [
-            "Feedback",
-            "Improvement Proposals",
-        ]
+    st.markdown(
+        '<div class="section-title">RECORDS</div>',
+        unsafe_allow_html=True,
     )
 
-    with tab1:
-        feedback_columns = [
-            column
-            for column in [
-                "Date",
-                "Reported By",
-                "Issue",
-                "Feedback Type",
-                "Status",
-            ]
-            if column in feedback.columns
+    feedback_columns = [
+        column
+        for column in [
+            "Date",
+            "Reported By",
+            "Feedback",
+            "Feedback Type",
+            "Status",
         ]
+        if column in feedback.columns
+    ]
 
+    if feedback.empty:
+        st.info("No feedback records available.")
+    else:
         st.dataframe(
             feedback[feedback_columns].sort_values(
                 "Date",
@@ -1713,6 +1713,7 @@ else:
             ),
             hide_index=True,
             use_container_width=True,
+            height=360,
             column_config={
                 "Date": st.column_config.DateColumn(
                     "Date",
@@ -1723,7 +1724,7 @@ else:
                     "Reported By",
                     width="small",
                 ),
-                "Issue": st.column_config.TextColumn(
+                "Feedback": st.column_config.TextColumn(
                     "Feedback",
                     width="large",
                 ),
@@ -1732,55 +1733,8 @@ else:
                     width="small",
                 ),
                 "Status": st.column_config.TextColumn(
-                    "Status / Category",
+                    "Status",
                     width="small",
-                ),
-            },
-        )
-
-    with tab2:
-        proposal_detail_columns = [
-            column
-            for column in [
-                "Proposal Date",
-                "Submitted By",
-                "Category",
-                "Module",
-                "User Impact",
-                "Improvement Proposal",
-                "Status",
-            ]
-            if column in proposals.columns
-        ]
-
-        st.dataframe(
-            proposals[proposal_detail_columns].sort_values(
-                "Proposal Date",
-                ascending=False,
-            ),
-            hide_index=True,
-            use_container_width=True,
-            column_config={
-                "Proposal Date": st.column_config.DateColumn(
-                    format="DD-MMM-YYYY"
-                ),
-                "Submitted By": st.column_config.TextColumn(
-                    width="small"
-                ),
-                "Category": st.column_config.TextColumn(
-                    width="small"
-                ),
-                "Module": st.column_config.TextColumn(
-                    width="small"
-                ),
-                "User Impact": st.column_config.TextColumn(
-                    width="large"
-                ),
-                "Improvement Proposal": st.column_config.TextColumn(
-                    width="large"
-                ),
-                "Status": st.column_config.TextColumn(
-                    width="small"
                 ),
             },
         )
