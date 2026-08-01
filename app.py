@@ -29,7 +29,7 @@ NAV_ITEMS = [
     "Overview",
     "Customer Adoption",
     "Booking Performance",
-    "Issues & Improvements",
+    "Feedback & Improvements",
 ]
 
 
@@ -1289,11 +1289,10 @@ elif page == "Booking Performance":
 # PAGE 4: ISSUES & IMPROVEMENTS
 # ============================================================
 else:
-    st.markdown("### Issues & Improvements")
-    st.caption(
-        "Track issue resolution, improvement progress, and customer feedback."
+    st.markdown("### Feedback & Improvements")
+    st.caption("Executive overview of user feedback, improvement proposals, and follow-up actions."
     )
-
+)  
     # --------------------------------------------------------
     # STANDARDIZE SOURCE DATA
     # --------------------------------------------------------
