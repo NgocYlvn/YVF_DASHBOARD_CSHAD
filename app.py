@@ -777,7 +777,7 @@ if page == "Overview":
             textposition="outside",
             cliponaxis=False,
         )
-        monthly_target = round(metrics["booking_target"] / 12)
+        monthly_target = int(round(metrics["booking_target"] / 12))
         fig.add_hline(
             y=monthly_target,
             line_dash="dash",
