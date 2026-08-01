@@ -1252,7 +1252,9 @@ elif page == "Booking Performance":
             title_text="",
             rangemode="tozero",
         )
-
+        fig.update_yaxes(
+            title_text="Minutes (min)"
+        )
         st.plotly_chart(
             fig,
             use_container_width=True,
