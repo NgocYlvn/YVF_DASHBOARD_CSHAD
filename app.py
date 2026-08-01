@@ -1688,8 +1688,8 @@ else:
     st.markdown("<br>", unsafe_allow_html=True)
     tab1, tab2 = st.tabs(
         [
-            "All Feedback",
-            "All Improvement Proposals",
+            "Feedback",
+            "Improvement Proposals",
         ]
     )
 
