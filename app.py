@@ -1290,10 +1290,7 @@ elif page == "Booking Performance":
 # ============================================================
 else:
     st.markdown("### Issues & Improvements")
-    st.caption(
-        "Track issue resolution, improvement progress, and customer feedback."
-    )
-
+   
     # --------------------------------------------------------
     # STANDARDIZE SOURCE DATA
     # --------------------------------------------------------
