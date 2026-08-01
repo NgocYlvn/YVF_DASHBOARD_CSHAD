@@ -170,6 +170,55 @@ st.markdown(
     .accent-amber .kpi-value { color: var(--amber); }
     .accent-red .kpi-value { color: var(--red); }
 
+    .target-card {
+        padding: 0 12px;
+    }
+
+    .target-card .kpi-label {
+        margin-bottom: 14px;
+    }
+
+    .target-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+        align-items: center;
+        justify-items: stretch;
+        column-gap: 12px;
+    }
+
+    .target-item {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .target-value {
+        color: var(--orange);
+        font-size: 1.9rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .target-caption {
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.15;
+        margin-top: 0.4rem;
+        white-space: nowrap;
+    }
+
+    .target-divider {
+        width: 1px;
+        height: 52px;
+        background: var(--line);
+        justify-self: center;
+    }
+
     div[data-testid="stDataFrame"] {
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -645,27 +694,22 @@ if page == "Overview":
             f"FY2026 ACTUAL VS TARGET: {format_percent(metrics['booking_achievement'], 1)}",
         )
     with cols[4]:
-        targets_html = (
-            f'<div class="kpi-card accent-orange">'
-            f'<div class="kpi-label">{FY_LABEL} Targets</div>'
-            f'<div style="display:flex;justify-content:space-between;'
-            f'align-items:center;margin-top:8px;padding:0 8px;">'
-            f'<div style="width:48%;text-align:center;">'
-            f'<div style="font-size:1.78rem;font-weight:800;line-height:1.1;'
-            f'color:#ED6B21;">{metrics["onboarding_target"]}</div>'
-            f'<div style="margin-top:0.28rem;font-size:0.71rem;line-height:1.15;'
-            f'color:#667085;">Customers</div>'
-            f'</div>'
-            f'<div style="width:1px;height:44px;background:#DCE5F0;"></div>'
-            f'<div style="width:48%;text-align:center;">'
-            f'<div style="font-size:1.78rem;font-weight:800;line-height:1.1;'
-            f'color:#ED6B21;">{metrics["booking_target"]}</div>'
-            f'<div style="margin-top:0.28rem;font-size:0.71rem;line-height:1.15;'
-            f'color:#667085;">Bookings</div>'
-            f'</div>'
-            f'</div>'
-            f'</div>'
-        )
+        targets_html = f"""
+        <div class="kpi-card target-card">
+            <div class="kpi-label">{FY_LABEL} Targets</div>
+            <div class="target-grid">
+                <div class="target-item">
+                    <div class="target-value">{metrics["onboarding_target"]}</div>
+                    <div class="target-caption">Customers</div>
+                </div>
+                <div class="target-divider"></div>
+                <div class="target-item">
+                    <div class="target-value">{metrics["booking_target"]}</div>
+                    <div class="target-caption">Bookings</div>
+                </div>
+            </div>
+        </div>
+        """
         st.markdown(targets_html, unsafe_allow_html=True)
 
 
