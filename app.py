@@ -1576,7 +1576,7 @@ else:
 
     with table_left:
         st.markdown(
-            f'<div class="section-title">OPEN ISSUES ({open_issues})</div>',
+            '<div class="section-title">OPEN ISSUES</div>',
             unsafe_allow_html=True,
         )
 
@@ -1630,7 +1630,7 @@ else:
 
     with table_right:
         st.markdown(
-            f'<div class="section-title">OPEN IMPROVEMENT PROPOSALS ({open_proposals})</div>',
+            '<div class="section-title">OPEN IMPROVEMENT PROPOSALS</div>',
             unsafe_allow_html=True,
         )
 
