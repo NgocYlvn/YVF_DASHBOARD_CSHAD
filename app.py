@@ -1701,7 +1701,7 @@ else:
         st.markdown(
             f"""
             <div class="feedback-summary">
-                <div class="feedback-header">FEEDBACK SUMMARY</div>
+                <div class="feedback-header">USER FEEDBACK SUMMARY</div>
                 <div class="feedback-content">
                     <div class="feedback-grid">
                         <div class="feedback-box feedback-total">
