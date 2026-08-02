@@ -230,6 +230,60 @@ st.markdown(
         margin-top: 0.4rem;
     }
 
+    .wrapped-table-container {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #FFFFFF;
+    }
+
+    .wrapped-data-table {
+        width: 100%;
+        min-width: 1180px;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 0.78rem;
+        color: var(--text);
+    }
+
+    .wrapped-data-table th {
+        background: #F7F9FC;
+        color: var(--muted);
+        font-weight: 500;
+        text-align: left;
+        padding: 0.65rem 0.7rem;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        vertical-align: middle;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .wrapped-data-table td {
+        padding: 0.68rem 0.7rem;
+        border-right: 1px solid #E4EAF2;
+        border-bottom: 1px solid #E4EAF2;
+        vertical-align: top;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.45;
+    }
+
+    .wrapped-data-table th:last-child,
+    .wrapped-data-table td:last-child {
+        border-right: none;
+    }
+
+    .wrapped-data-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .wrapped-data-table tbody tr:nth-child(even) {
+        background: #FBFCFE;
+    }
+
     .footer-note {
         color: var(--muted);
         font-size: 0.76rem;
@@ -1330,26 +1384,53 @@ elif page == "Booking Performance":
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">BOOKING RECORDS</div>', unsafe_allow_html=True)
-    st.dataframe(
-        filtered_booking[
-            [
-                "Booking Date",
-                "Customer Name",
-                "Transport Mode",
-                "Bookings",
-                "Processing Time (min)",
-                "Status",
-                "Handled By",
-                "Remarks",
-            ]
-        ].sort_values("Booking Date", ascending=False),
-        hide_index=True,
-        use_container_width=True,
-        column_config={
-            "Booking Date": st.column_config.DateColumn(format="DD-MMM-YYYY"),
-            "Processing Time (min)": st.column_config.NumberColumn(format="%.1f"),
+    st.markdown(
+        '<div class="section-title">BOOKING RECORDS</div>',
+        unsafe_allow_html=True,
+    )
+
+    booking_records_display = filtered_booking[
+        [
+            "Booking Date",
+            "Customer Name",
+            "Transport Mode",
+            "Bookings",
+            "Processing Time (min)",
+            "Status",
+            "Handled By",
+            "Remarks",
+        ]
+    ].sort_values("Booking Date", ascending=False).copy()
+
+    booking_records_display["Bookings"] = pd.to_numeric(
+        booking_records_display["Bookings"],
+        errors="coerce",
+    ).fillna(0).astype(int)
+
+    booking_records_display["Processing Time (min)"] = pd.to_numeric(
+        booking_records_display["Processing Time (min)"],
+        errors="coerce",
+    ).map(lambda value: f"{value:.1f}" if pd.notna(value) else "")
+
+    booking_records_display["Remarks"] = (
+        booking_records_display["Remarks"]
+        .replace({None: "", "None": "", np.nan: ""})
+        .fillna("")
+    )
+
+    render_wrapped_html_table(
+        booking_records_display,
+        column_widths={
+            "Booking Date": "12%",
+            "Customer Name": "16%",
+            "Transport Mode": "13%",
+            "Bookings": "9%",
+            "Processing Time (min)": "15%",
+            "Status": "11%",
+            "Handled By": "11%",
+            "Remarks": "13%",
         },
+        date_columns=["Booking Date"],
     )
 
 
@@ -1479,57 +1560,6 @@ else:
             font-weight: 700;
         }
 
-        .wrapped-table-container {
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid #DCE5F0;
-            border-radius: 10px;
-            background: #FFFFFF;
-        }
-
-        .wrapped-data-table {
-            width: 100%;
-            min-width: 1180px;
-            border-collapse: collapse;
-            table-layout: fixed;
-            font-size: 0.78rem;
-            color: #172033;
-        }
-
-        .wrapped-data-table th {
-            background: #F7F9FC;
-            color: #667085;
-            font-weight: 500;
-            text-align: left;
-            padding: 0.65rem 0.7rem;
-            border-right: 1px solid #DCE5F0;
-            border-bottom: 1px solid #DCE5F0;
-            vertical-align: middle;
-        }
-
-        .wrapped-data-table td {
-            padding: 0.68rem 0.7rem;
-            border-right: 1px solid #E4EAF2;
-            border-bottom: 1px solid #E4EAF2;
-            vertical-align: top;
-            white-space: normal;
-            overflow-wrap: anywhere;
-            word-break: normal;
-            line-height: 1.45;
-        }
-
-        .wrapped-data-table th:last-child,
-        .wrapped-data-table td:last-child {
-            border-right: none;
-        }
-
-        .wrapped-data-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .wrapped-data-table tbody tr:nth-child(even) {
-            background: #FBFCFE;
-        }
         </style>
         """,
         unsafe_allow_html=True,
