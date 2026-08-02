@@ -1370,7 +1370,7 @@ else:
         }
 
         .feedback-content {
-            padding: 2.2rem 1.1rem 1rem;
+            padding: 1rem 1.1rem;
         }
 
         .feedback-grid {
@@ -1634,6 +1634,7 @@ else:
                 "Submitted By",
                 "Category",
                 "Module",
+                "Current User Issue",
                 "User Impact",
                 "Improvement Proposal",
                 "Status",
@@ -1646,7 +1647,9 @@ else:
             columns={
                 "Proposal Date": "Reported Date",
                 "Submitted By": "Reported By",
-                "User Impact": "User Issue",
+                "Current User Issue": "Current User Issue",
+                "User Impact": "Current User Issue",
+                "Improvement Proposal": "Proposed Improvement",
             }
         )
 
@@ -1684,11 +1687,11 @@ else:
                     "Module",
                     width="small",
                 ),
-                "User Issue": st.column_config.TextColumn(
-                    "User Issue / Current Pain Point",
+                "Current User Issue": st.column_config.TextColumn(
+                    "Current User Issue",
                     width="large",
                 ),
-                "Improvement Proposal": st.column_config.TextColumn(
+                "Proposed Improvement": st.column_config.TextColumn(
                     "Proposed Improvement",
                     width="large",
                 ),
