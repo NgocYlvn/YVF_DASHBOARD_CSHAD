@@ -146,7 +146,7 @@ st.markdown(
         font-size:0.88rem;
         font-weight:700;
         text-align:center;
-        margin-bottom:18px;
+        margin-bottom:12px;
     }
 
     .kpi-value {
@@ -161,9 +161,10 @@ st.markdown(
     .kpi-note {
         color: var(--muted);
         font-size: 0.71rem;
-        line-height: 1.15;
-        margin-top: 0.28rem;
+        line-height: 1.2;
+        margin-top: 0.48rem;
         text-align: center;
+        padding: 0 0.4rem;
     }
 
     .accent-orange .kpi-value { color: var(--orange); }
@@ -454,12 +455,18 @@ def overview_rate(overview: pd.DataFrame, row: int, col: int, cell: str):
 
 
 def kpi_card(label, value, note="", accent=""):
+    note_html = (
+        f'<div class="kpi-note">{html.escape(str(note))}</div>'
+        if note
+        else ""
+    )
     st.markdown(
         f"""
         <div class="kpi-card {accent}">
-            <div class="kpi-label">{label}</div>
-            <div class="kpi-value">{value}</div>
-                    </div>
+            <div class="kpi-label">{html.escape(str(label))}</div>
+            <div class="kpi-value">{html.escape(str(value))}</div>
+            {note_html}
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -1177,9 +1184,9 @@ elif page == "Booking Performance":
 
     booking_achievement = safe_divide(total_bookings, metrics["booking_target"])
 
-    c1, c2, c3, c4 = st.columns(4, gap="small")
+    c1, c2, c3, c4, c5 = st.columns(5, gap="small")
     with c1:
-        kpi_card("Booking volume", total_bookings)
+        kpi_card("Booking Volume", total_bookings)
     with c2:
         kpi_card(
             "Target Achievement",
@@ -1188,16 +1195,35 @@ elif page == "Booking Performance":
             accent="accent-orange",
         )
     with c3:
-        kpi_card("Avg. Processing Time/ Booking", f"{avg_processing:.1f} min")
+        kpi_card("Avg. Processing Time / Booking", f"{avg_processing:.1f} min")
     with c4:
-        kpi_card("Fastest Processing Time/ Booking", f"{fastest_processing:.1f} min")
+        kpi_card("Fastest Processing Time / Booking", f"{fastest_processing:.1f} min")
+    with c5:
+        kpi_card(
+            "Slowest Processing Time / Booking",
+            f"{slowest_processing:.1f} min",
+            accent="accent-red",
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.55, 1])
 
     with left:
+        booking_dates = filtered_booking["Booking Date"].dropna()
+        selected_days = (
+            (booking_dates.max().normalize() - booking_dates.min().normalize()).days + 1
+            if not booking_dates.empty
+            else 0
+        )
+        use_weekly = selected_days > 31
+        volume_title = (
+            "BOOKING VOLUME (WEEKLY)"
+            if use_weekly
+            else "BOOKING VOLUME (DAILY)"
+        )
+
         st.markdown(
-            '<div class="section-title">BOOKING VOLUME</div>',
+            f'<div class="section-title">{volume_title}</div>',
             unsafe_allow_html=True,
         )
 
@@ -1206,50 +1232,76 @@ elif page == "Booking Performance":
             .sum()
             .sort_values("Booking Date")
         )
-
-        # Convert the date to a text label so Plotly does not display 00:00 or 12:00.
         daily["Booking Date"] = pd.to_datetime(
             daily["Booking Date"],
             errors="coerce",
         )
         daily = daily.dropna(subset=["Booking Date"])
-        daily["Date Label"] = daily["Booking Date"].dt.strftime("%d %b")
+
+        if use_weekly:
+            chart_data = (
+                daily.assign(
+                    Week_Start=daily["Booking Date"]
+                    .dt.to_period("W-MON")
+                    .apply(lambda period: period.start_time)
+                )
+                .groupby("Week_Start", as_index=False)["Bookings"]
+                .sum()
+                .sort_values("Week_Start")
+            )
+            chart_data["Week_End"] = chart_data["Week_Start"] + pd.Timedelta(days=6)
+            chart_data["Period Label"] = (
+                chart_data["Week_Start"].dt.strftime("%d %b")
+                + "–"
+                + chart_data["Week_End"].dt.strftime("%d %b")
+            )
+            custom_date_col = "Week_Start"
+            tick_angle = -30 if len(chart_data) > 8 else 0
+            hover_template = (
+                "Week: %{x}"
+                "<br>Bookings: %{y}"
+                "<extra></extra>"
+            )
+        else:
+            chart_data = daily.copy()
+            chart_data["Period Label"] = chart_data["Booking Date"].dt.strftime("%d %b")
+            custom_date_col = "Booking Date"
+            tick_angle = -45 if len(chart_data) > 15 else 0
+            hover_template = (
+                "%{customdata[0]|%d %b %Y}"
+                "<br>Bookings: %{y}"
+                "<extra></extra>"
+            )
 
         fig = px.bar(
-            daily,
-            x="Date Label",
+            chart_data,
+            x="Period Label",
             y="Bookings",
             text="Bookings",
-            custom_data=["Booking Date"],
-            category_orders={"Date Label": daily["Date Label"].tolist()},
+            custom_data=[custom_date_col],
+            category_orders={
+                "Period Label": chart_data["Period Label"].tolist()
+            },
         )
-
         fig.update_traces(
             marker_color="#0b63ce",
             textposition="outside",
             cliponaxis=False,
-            hovertemplate=(
-                "%{customdata[0]|%d %b %Y}"
-                "<br>Bookings: %{y}"
-                "<extra></extra>"
-            ),
+            hovertemplate=hover_template,
         )
-
         standard_chart_layout(fig, 360)
-
         fig.update_xaxes(
             type="category",
             categoryorder="array",
-            categoryarray=daily["Date Label"].tolist(),
-            tickangle=0,
+            categoryarray=chart_data["Period Label"].tolist(),
+            tickangle=tick_angle,
             title_text="",
+            tickfont={"size": 10 if len(chart_data) > 20 else 11},
         )
-
         fig.update_yaxes(
             title_text="",
             rangemode="tozero",
         )
-
         st.plotly_chart(
             fig,
             use_container_width=True,
@@ -1492,9 +1544,12 @@ else:
         .feedback-summary {
             background: #FFFFFF;
             border: 1px solid #DCE5F0;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
-            min-height: 294px;
+            height: 334px;
+            min-height: 334px;
+            max-height: 334px;
+            box-sizing: border-box;
             box-shadow: 0 2px 10px rgba(28,54,89,.05);
         }
 
@@ -1509,7 +1564,7 @@ else:
         }
 
         .feedback-content {
-            padding: 1rem 1.1rem;
+            padding: 0.75rem 1.1rem 1rem;
         }
 
         .feedback-grid {
@@ -1711,6 +1766,9 @@ else:
                 hovertemplate="%{y}: %{x} issue(s)<extra></extra>",
             )
             standard_chart_layout(fig, 294)
+            fig.update_layout(
+                margin=dict(l=15, r=15, t=5, b=25),
+            )
             fig.update_xaxes(
                 dtick=1,
                 rangemode="tozero",
@@ -1807,8 +1865,8 @@ else:
                 "Reported By": "11%",
                 "Category": "10%",
                 "Module": "8%",
-                "Current User Issue": "27%",
-                "Proposed Improvement": "25%",
+                "Current User Issue": "30%",
+                "Proposed Improvement": "28%",
                 "Status": "8%",
             },
             date_columns=["Reported Date"],
@@ -1854,6 +1912,6 @@ else:
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    '© 2026 CS HAD | Internal Use Only | Version 1.0</div>',
+    '© 2026 CS HAD | Internal Use Only | Version 7.0</div>',
     unsafe_allow_html=True,
 )
