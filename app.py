@@ -719,7 +719,34 @@ page = st.sidebar.radio(
     index=0,
     label_visibility="collapsed",
 )
+st.sidebar.markdown(
+    """
+    <hr style="
+        margin:18px 0 12px 0;
+        border:none;
+        border-top:1px solid rgba(255,255,255,0.15);
+    ">
+    """,
+    unsafe_allow_html=True,
+)
 
+st.sidebar.markdown(
+    """
+    <div style="
+        color:#C8D2E3;
+        font-size:11px;
+        line-height:1.6;
+        text-align:center;
+        padding-bottom:8px;
+    ">
+        <b>FY2026</b><br>
+        Version 1.0<br>
+        © 2026 CS HAD<br>
+        Internal Use Only
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ============================================================
 # LOAD DATA
@@ -1990,9 +2017,3 @@ else:
             },
             date_columns=["Date"],
         )
-
-st.markdown(
-    '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    '© 2026 CS HAD | Internal Use Only | Version 1.0</div>',
-    unsafe_allow_html=True,
-)
