@@ -962,7 +962,7 @@ elif page == "Customer Adoption":
         )
 
     with right:
-        st.markdown('<div class="section-title">CUSTOMERS BY YVF STATUS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">CUSTOMER ONBOARDING STATUS</div>', unsafe_allow_html=True)
         status_count = (
             filtered_customer.groupby("YVF Status", as_index=False)
             .size()
