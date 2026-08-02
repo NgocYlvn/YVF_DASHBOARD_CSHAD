@@ -809,19 +809,16 @@ if page == "Overview":
         kpi_card(
             "Total Onboarded",
             f"{metrics['total_onboarded']}",
-            f"Onboarding rate: {format_percent(metrics['overall_rate'])}",
         )
     with cols[2]:
         kpi_card(
             "FY2026 Onboarded",
             f"{metrics['new_onboarded']}",
-            f"Onboarding rate: {format_percent(metrics['new_rate'])}",
         )
     with cols[3]:
         kpi_card(
             "YTD Bookings",
             f"{metrics['ytd_bookings']}",
-            f"FY2026 ACTUAL VS TARGET: {format_percent(metrics['booking_achievement'], 1)}",
         )
     with cols[4]:
         targets_html = f"""
