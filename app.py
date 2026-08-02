@@ -1,4 +1,5 @@
 from pathlib import Path
+import html
 import io
 import re
 
@@ -571,6 +572,63 @@ def standard_chart_layout(fig, height=350):
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(gridcolor="#e9eef5")
     return fig
+
+
+def render_wrapped_html_table(
+    df: pd.DataFrame,
+    column_widths: dict[str, str] | None = None,
+    date_columns: list[str] | None = None,
+):
+    """Render a read-only HTML table with wrapped text and automatic row height."""
+    if df.empty:
+        st.info("No data available.")
+        return
+
+    display_df = df.copy()
+    column_widths = column_widths or {}
+    date_columns = date_columns or []
+
+    for column in date_columns:
+        if column in display_df.columns:
+            display_df[column] = pd.to_datetime(
+                display_df[column],
+                errors="coerce",
+            ).dt.strftime("%d-%b-%Y")
+            display_df[column] = display_df[column].fillna("")
+
+    display_df = display_df.fillna("")
+
+    colgroup = "".join(
+        f'<col style="width:{column_widths.get(str(column), "auto")};">'
+        for column in display_df.columns
+    )
+
+    header_html = "".join(
+        f"<th>{html.escape(str(column))}</th>"
+        for column in display_df.columns
+    )
+
+    body_rows = []
+    for _, row in display_df.iterrows():
+        cells = "".join(
+            "<td>"
+            + html.escape(str(value)).replace("\n", "<br>")
+            + "</td>"
+            for value in row
+        )
+        body_rows.append(f"<tr>{cells}</tr>")
+
+    table_html = f"""
+    <div class="wrapped-table-container">
+        <table class="wrapped-data-table">
+            <colgroup>{colgroup}</colgroup>
+            <thead><tr>{header_html}</tr></thead>
+            <tbody>{''.join(body_rows)}</tbody>
+        </table>
+    </div>
+    """
+
+    st.markdown(table_html, unsafe_allow_html=True)
 
 
 # ============================================================
@@ -1420,6 +1478,58 @@ else:
         div[data-testid="stTabs"] button {
             font-weight: 700;
         }
+
+        .wrapped-table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #DCE5F0;
+            border-radius: 10px;
+            background: #FFFFFF;
+        }
+
+        .wrapped-data-table {
+            width: 100%;
+            min-width: 1180px;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 0.78rem;
+            color: #172033;
+        }
+
+        .wrapped-data-table th {
+            background: #F7F9FC;
+            color: #667085;
+            font-weight: 500;
+            text-align: left;
+            padding: 0.65rem 0.7rem;
+            border-right: 1px solid #DCE5F0;
+            border-bottom: 1px solid #DCE5F0;
+            vertical-align: middle;
+        }
+
+        .wrapped-data-table td {
+            padding: 0.68rem 0.7rem;
+            border-right: 1px solid #E4EAF2;
+            border-bottom: 1px solid #E4EAF2;
+            vertical-align: top;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            line-height: 1.45;
+        }
+
+        .wrapped-data-table th:last-child,
+        .wrapped-data-table td:last-child {
+            border-right: none;
+        }
+
+        .wrapped-data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .wrapped-data-table tbody tr:nth-child(even) {
+            background: #FBFCFE;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -1659,47 +1769,19 @@ else:
                 ascending=False,
             )
 
-        st.dataframe(
+        render_wrapped_html_table(
             issue_display,
-            hide_index=True,
-            use_container_width=True,
-            height=max(350, min(680, 76 * (len(issue_display) + 1))),
-            column_config={
-                "No.": st.column_config.NumberColumn(
-                    "No.",
-                    width="small",
-                    format="%d",
-                ),
-                "Reported Date": st.column_config.DateColumn(
-                    "Reported Date",
-                    format="DD-MMM-YYYY",
-                    width="small",
-                ),
-                "Reported By": st.column_config.TextColumn(
-                    "Reported By",
-                    width="small",
-                ),
-                "Category": st.column_config.TextColumn(
-                    "Category",
-                    width="small",
-                ),
-                "Module": st.column_config.TextColumn(
-                    "Module",
-                    width="small",
-                ),
-                "Current User Issue": st.column_config.TextColumn(
-                    "Current User Issue",
-                    width="large",
-                ),
-                "Proposed Improvement": st.column_config.TextColumn(
-                    "Proposed Improvement",
-                    width="large",
-                ),
-                "Status": st.column_config.TextColumn(
-                    "Status",
-                    width="small",
-                ),
+            column_widths={
+                "No.": "5%",
+                "Reported Date": "9%",
+                "Reported By": "11%",
+                "Category": "10%",
+                "Module": "8%",
+                "Current User Issue": "27%",
+                "Proposed Improvement": "25%",
+                "Status": "8%",
             },
+            date_columns=["Reported Date"],
         )
 
     with tab_feedback:
