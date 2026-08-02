@@ -1354,16 +1354,23 @@ else:
             background: #FFFFFF;
             border: 1px solid #DCE5F0;
             border-radius: 12px;
-            padding: 1rem 1.1rem;
+            overflow: hidden;
             min-height: 294px;
             box-shadow: 0 2px 10px rgba(28,54,89,.05);
         }
 
-        .feedback-title {
-            color: #083B82;
+        .feedback-header {
+            background: #083B82;
+            color: #FFFFFF;
+            padding: 0.52rem 0.8rem;
             font-size: 0.95rem;
             font-weight: 800;
-            margin-bottom: 0.8rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .feedback-content {
+            padding: 1rem 1.1rem;
         }
 
         .feedback-grid {
@@ -1520,7 +1527,7 @@ else:
     # ISSUE DISTRIBUTION + USER FEEDBACK
     # --------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
-    issue_col, feedback_col = st.columns([1.65, 1], gap="medium")
+    issue_col, feedback_col = st.columns([1.6, 1], gap="small")
 
     with issue_col:
         st.markdown(
@@ -1584,22 +1591,23 @@ else:
         st.markdown(
             f"""
             <div class="feedback-summary">
-                <div class="feedback-title">FEEDBACK SUMMARY</div>
-                <div class="feedback-grid">
-                    <div class="feedback-box feedback-total">
-                        <div class="feedback-value">{total_feedback}</div>
-                        <div class="feedback-label">Total Feedback</div>
-                    </div>
-                    <div class="feedback-box feedback-positive">
-                        <div class="feedback-value">{positive_feedback}</div>
-                        <div class="feedback-label">Positive</div>
-                    </div>
-                    <div class="feedback-box feedback-negative">
-                        <div class="feedback-value">{negative_feedback}</div>
-                        <div class="feedback-label">Negative</div>
+                <div class="feedback-header">FEEDBACK SUMMARY</div>
+                <div class="feedback-content">
+                    <div class="feedback-grid">
+                        <div class="feedback-box feedback-total">
+                            <div class="feedback-value">{total_feedback}</div>
+                            <div class="feedback-label">Total Feedback</div>
+                        </div>
+                        <div class="feedback-box feedback-positive">
+                            <div class="feedback-value">{positive_feedback}</div>
+                            <div class="feedback-label">Positive</div>
+                        </div>
+                        <div class="feedback-box feedback-negative">
+                            <div class="feedback-value">{negative_feedback}</div>
+                            <div class="feedback-label">Negative</div>
+                        </div>
                     </div>
                 </div>
-
             </div>
             """,
             unsafe_allow_html=True,    
