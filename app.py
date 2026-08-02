@@ -928,7 +928,7 @@ elif page == "Customer Adoption":
     with c2:
         kpi_card("Total Onboarded", metrics["total_onboarded"])
     with c3:
-        kpi_card("FY2026 Pending Onboard", metrics["pending"], accent="accent-amber")
+        kpi_card("Pending Onboard", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.6, 1])
@@ -962,7 +962,7 @@ elif page == "Customer Adoption":
         )
 
     with right:
-        st.markdown('<div class="section-title">CUSTOMER ONBOARDING STATUS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">CUSTOMERS BY YVF STATUS</div>', unsafe_allow_html=True)
         status_count = (
             filtered_customer.groupby("YVF Status", as_index=False)
             .size()
@@ -1134,9 +1134,9 @@ elif page == "Booking Performance":
             accent="accent-orange",
         )
     with c3:
-        kpi_card("Avg. Processing Time/ Booking", f"{avg_processing:.1f} min")
+        kpi_card("Avg. Processing Time", f"{avg_processing:.1f} min")
     with c4:
-        kpi_card("Fastest Processing Time/ Booking", f"{fastest_processing:.1f} min")
+        kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.55, 1])
@@ -1804,34 +1804,22 @@ else:
                 ascending=False,
             )
 
-        st.dataframe(
+        feedback_display = feedback_display.rename(
+            columns={
+                "Feedback": "User Feedback",
+            }
+        )
+
+        render_wrapped_html_table(
             feedback_display,
-            hide_index=True,
-            use_container_width=True,
-            height=max(260, min(520, 52 * (len(feedback_display) + 2))),
-            column_config={
-                "Date": st.column_config.DateColumn(
-                    "Date",
-                    format="DD-MMM-YYYY",
-                    width="small",
-                ),
-                "Reported By": st.column_config.TextColumn(
-                    "Reported By",
-                    width="small",
-                ),
-                "Feedback": st.column_config.TextColumn(
-                    "User Feedback",
-                    width="large",
-                ),
-                "Feedback Type": st.column_config.TextColumn(
-                    "Feedback Type",
-                    width="small",
-                ),
-                "Status": st.column_config.TextColumn(
-                    "Status",
-                    width="small",
-                ),
+            column_widths={
+                "Date": "12%",
+                "Reported By": "15%",
+                "User Feedback": "48%",
+                "Feedback Type": "13%",
+                "Status": "12%",
             },
+            date_columns=["Date"],
         )
 
 st.markdown(
