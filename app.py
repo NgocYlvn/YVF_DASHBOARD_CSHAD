@@ -1984,6 +1984,6 @@ else:
 
 st.markdown(
     '<div class="footer-note">YVF Adoption Dashboard – CS HAD | '
-    '© 2026 CS HAD | Internal Use Only | Version 7.0</div>',
+    '© 2026 CS HAD | Internal Use Only | Version 1.0</div>',
     unsafe_allow_html=True,
 )
