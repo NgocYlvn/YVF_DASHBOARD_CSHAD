@@ -26,6 +26,9 @@ FY_LABEL = "FY2026"
 ONBOARDING_TARGET = 6
 BOOKING_TARGET = 800
 
+DAILY_BOOKING_TITLE = "DAILY BOOKING VOLUME"
+MONTHLY_BOOKING_TITLE = "MONTHLY BOOKING VOLUME"
+
 NAV_ITEMS = [
     "Overview",
     "Customer Adoption",
@@ -1164,7 +1167,7 @@ elif page == "Booking Performance":
         & booking["YVF Used"].str.casefold().eq("yes")
     ].copy()
 
-    if isinstance(date_range, tuple) and len(date_range) == 2:
+    if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
         start_date, end_date = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
         filtered_booking = filtered_booking[
             filtered_booking["Booking Date"].between(start_date, end_date)
@@ -1209,62 +1212,71 @@ elif page == "Booking Performance":
     left, right = st.columns([1.55, 1])
 
     with left:
-        booking_dates = filtered_booking["Booking Date"].dropna()
+        # Use the selected filter period to decide Daily or Monthly view.
+        if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
+            selected_start = pd.Timestamp(date_range[0]).normalize()
+            selected_end = pd.Timestamp(date_range[1]).normalize()
+        else:
+            available_dates = filtered_booking["Booking Date"].dropna()
+            if not available_dates.empty:
+                selected_start = available_dates.min().normalize()
+                selected_end = available_dates.max().normalize()
+            else:
+                selected_start = pd.NaT
+                selected_end = pd.NaT
+
         selected_days = (
-            (booking_dates.max().normalize() - booking_dates.min().normalize()).days + 1
-            if not booking_dates.empty
+            (selected_end - selected_start).days + 1
+            if pd.notna(selected_start) and pd.notna(selected_end)
             else 0
         )
-        use_weekly = selected_days > 31
-        volume_title = (
-            "BOOKING VOLUME (WEEKLY)"
-            if use_weekly
-            else "BOOKING VOLUME (DAILY)"
-        )
 
-        st.markdown(
-            f'<div class="section-title">{volume_title}</div>',
-            unsafe_allow_html=True,
-        )
+        use_monthly = selected_days > 31
 
-        daily = (
-            filtered_booking.groupby("Booking Date", as_index=False)["Bookings"]
-            .sum()
-            .sort_values("Booking Date")
-        )
-        daily["Booking Date"] = pd.to_datetime(
-            daily["Booking Date"],
-            errors="coerce",
-        )
-        daily = daily.dropna(subset=["Booking Date"])
+        if use_monthly:
+            chart_title = MONTHLY_BOOKING_TITLE
 
-        if use_weekly:
             chart_data = (
-                daily.assign(
-                    Week_Start=daily["Booking Date"]
-                    .dt.to_period("W-MON")
-                    .apply(lambda period: period.start_time)
+                filtered_booking.assign(
+                    Month_Start=filtered_booking["Booking Date"]
+                    .dt.to_period("M")
+                    .dt.to_timestamp()
                 )
-                .groupby("Week_Start", as_index=False)["Bookings"]
+                .groupby("Month_Start", as_index=False)["Bookings"]
                 .sum()
-                .sort_values("Week_Start")
+                .sort_values("Month_Start")
             )
-            chart_data["Week_End"] = chart_data["Week_Start"] + pd.Timedelta(days=6)
+
             chart_data["Period Label"] = (
-                chart_data["Week_Start"].dt.strftime("%d %b")
-                + "–"
-                + chart_data["Week_End"].dt.strftime("%d %b")
+                chart_data["Month_Start"].dt.strftime("%b %Y")
             )
-            custom_date_col = "Week_Start"
-            tick_angle = -30 if len(chart_data) > 8 else 0
+            custom_date_col = "Month_Start"
+            tick_angle = -30 if len(chart_data) > 12 else 0
             hover_template = (
-                "Week: %{x}"
+                "%{customdata[0]|%b %Y}"
                 "<br>Bookings: %{y}"
                 "<extra></extra>"
             )
         else:
-            chart_data = daily.copy()
-            chart_data["Period Label"] = chart_data["Booking Date"].dt.strftime("%d %b")
+            chart_title = DAILY_BOOKING_TITLE
+
+            chart_data = (
+                filtered_booking.groupby(
+                    "Booking Date",
+                    as_index=False,
+                )["Bookings"]
+                .sum()
+                .sort_values("Booking Date")
+            )
+
+            chart_data["Booking Date"] = pd.to_datetime(
+                chart_data["Booking Date"],
+                errors="coerce",
+            )
+            chart_data = chart_data.dropna(subset=["Booking Date"])
+            chart_data["Period Label"] = (
+                chart_data["Booking Date"].dt.strftime("%d %b")
+            )
             custom_date_col = "Booking Date"
             tick_angle = -45 if len(chart_data) > 15 else 0
             hover_template = (
@@ -1273,40 +1285,55 @@ elif page == "Booking Performance":
                 "<extra></extra>"
             )
 
-        fig = px.bar(
-            chart_data,
-            x="Period Label",
-            y="Bookings",
-            text="Bookings",
-            custom_data=[custom_date_col],
-            category_orders={
-                "Period Label": chart_data["Period Label"].tolist()
-            },
+        st.markdown(
+            f'<div class="section-title">{chart_title}</div>',
+            unsafe_allow_html=True,
         )
-        fig.update_traces(
-            marker_color="#0b63ce",
-            textposition="outside",
-            cliponaxis=False,
-            hovertemplate=hover_template,
-        )
-        standard_chart_layout(fig, 360)
-        fig.update_xaxes(
-            type="category",
-            categoryorder="array",
-            categoryarray=chart_data["Period Label"].tolist(),
-            tickangle=tick_angle,
-            title_text="",
-            tickfont={"size": 10 if len(chart_data) > 20 else 11},
-        )
-        fig.update_yaxes(
-            title_text="",
-            rangemode="tozero",
-        )
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={"displayModeBar": False},
-        )
+
+        if chart_data.empty:
+            st.info("No booking data available for the selected period.")
+        else:
+            fig = px.bar(
+                chart_data,
+                x="Period Label",
+                y="Bookings",
+                text="Bookings",
+                custom_data=[custom_date_col],
+                category_orders={
+                    "Period Label": chart_data["Period Label"].tolist()
+                },
+            )
+
+            fig.update_traces(
+                marker_color="#0b63ce",
+                textposition="outside",
+                cliponaxis=False,
+                hovertemplate=hover_template,
+            )
+
+            standard_chart_layout(fig, 360)
+
+            fig.update_xaxes(
+                type="category",
+                categoryorder="array",
+                categoryarray=chart_data["Period Label"].tolist(),
+                tickangle=tick_angle,
+                title_text="",
+                tickfont={
+                    "size": 10 if len(chart_data) > 20 else 11
+                },
+            )
+
+            fig.update_yaxes(
+                title_text="",
+                rangemode="tozero",
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
 
     with right:
         st.markdown('<div class="section-title">BOOKING DISTRIBUTION</div>', unsafe_allow_html=True)
