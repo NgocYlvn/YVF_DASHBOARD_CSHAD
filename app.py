@@ -1370,7 +1370,7 @@ else:
         }
 
         .feedback-content {
-            padding: 2.2rem 1.1rem;
+            padding: 2.2rem 1.1rem 1rem;
         }
 
         .feedback-grid {
