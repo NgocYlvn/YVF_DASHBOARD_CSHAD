@@ -1194,7 +1194,6 @@ elif page == "Booking Performance":
         kpi_card(
             "Target Achievement",
             format_percent(booking_achievement, 1),
-            f"{total_bookings} / {metrics['booking_target']} bookings",
             accent="accent-orange",
         )
     with c3:
