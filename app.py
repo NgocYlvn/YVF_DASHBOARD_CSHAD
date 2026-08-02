@@ -1599,14 +1599,10 @@ else:
                         <div class="feedback-label">Negative</div>
                     </div>
                 </div>
-                <div style="color:#667085;font-size:0.75rem;margin-top:0.9rem;line-height:1.45;">
-                    Feedback is shown separately from the issue log. Negative feedback may
-                    identify a new user issue, while positive feedback reflects user experience.
-                    {f'<br>Other / unclassified feedback: {other_feedback}' if other_feedback else ''}
-                </div>
+
             </div>
             """,
-            unsafe_allow_html=True,
+            unsafe_allow_html=True,    
         )
 
     # --------------------------------------------------------
