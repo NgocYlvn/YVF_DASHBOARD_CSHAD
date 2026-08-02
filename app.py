@@ -1134,9 +1134,9 @@ elif page == "Booking Performance":
             accent="accent-orange",
         )
     with c3:
-        kpi_card("Avg. Processing Time", f"{avg_processing:.1f} min")
+        kpi_card("Avg. Processing Time/ Booking", f"{avg_processing:.1f} min")
     with c4:
-        kpi_card("Fastest Processing Time", f"{fastest_processing:.1f} min")
+        kpi_card("Fastest Processing Time/ Booking", f"{fastest_processing:.1f} min")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.55, 1])
