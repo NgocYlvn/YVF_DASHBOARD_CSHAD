@@ -1176,32 +1176,27 @@ elif page == "Booking Performance":
     avg_processing = processing_series.mean()
     avg_processing = 0 if pd.isna(avg_processing) else round(float(avg_processing), 1)
 
-    fastest_processing = processing_series.min()
-    fastest_processing = 0 if pd.isna(fastest_processing) else round(float(fastest_processing), 1)
+   booking_achievement = safe_divide(total_bookings, metrics["booking_target"])
 
-    slowest_processing = processing_series.max()
-    slowest_processing = 0 if pd.isna(slowest_processing) else round(float(slowest_processing), 1)
-
-    booking_achievement = safe_divide(total_bookings, metrics["booking_target"])
-
-    c1, c2, c3, c4, c5 = st.columns(5, gap="small")
+    c1, c2, c3 = st.columns(3, gap="small")
+    
     with c1:
-        kpi_card("Booking Volume", total_bookings)
+        kpi_card(
+            "Booking Volume",
+            total_bookings,
+        )
+    
     with c2:
         kpi_card(
             "Target Achievement",
             format_percent(booking_achievement, 1),
             accent="accent-orange",
         )
+    
     with c3:
-        kpi_card("Avg. Processing Time / Booking", f"{avg_processing:.1f} min")
-    with c4:
-        kpi_card("Fastest Processing Time / Booking", f"{fastest_processing:.1f} min")
-    with c5:
         kpi_card(
-            "Slowest Processing Time / Booking",
-            f"{slowest_processing:.1f} min",
-            accent="accent-red",
+            "Avg. Processing Time / Booking",
+            f"{avg_processing:.1f} min",
         )
 
     # ========================================================
