@@ -1208,10 +1208,13 @@ elif page == "Booking Performance":
             accent="accent-red",
         )
 
+    # ========================================================
+    # ROW 1: TIME-BASED PERFORMANCE
+    # ========================================================
     st.markdown("<br>", unsafe_allow_html=True)
-    left, right = st.columns([1.55, 1])
+    volume_col, processing_col = st.columns([1, 1], gap="medium")
 
-    with left:
+    with volume_col:
         # Use the selected filter period to decide Daily or Monthly view.
         if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
             selected_start = pd.Timestamp(date_range[0]).normalize()
@@ -1311,7 +1314,7 @@ elif page == "Booking Performance":
                 hovertemplate=hover_template,
             )
 
-            standard_chart_layout(fig, 360)
+            standard_chart_layout(fig, 350)
 
             fig.update_xaxes(
                 type="category",
@@ -1335,50 +1338,8 @@ elif page == "Booking Performance":
                 config={"displayModeBar": False},
             )
 
-    with right:
-        st.markdown('<div class="section-title">BOOKING DISTRIBUTION</div>', unsafe_allow_html=True)
-        by_mode = (
-            filtered_booking.groupby("Transport Mode", as_index=False)["Bookings"]
-            .sum()
-            .sort_values("Bookings", ascending=False)
-        )
-        fig = px.pie(
-            by_mode,
-            names="Transport Mode",
-            values="Bookings",
-            hole=0.55,
-        )
-        fig.update_traces(textposition="inside", textinfo="label+percent")
-        fig.update_layout(
-            height=360,
-            margin=dict(l=20, r=20, t=35, b=20),
-            paper_bgcolor="white",
-            showlegend=False,
-        )
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    left, right = st.columns(2)
-
-    with left:
-        st.markdown('<div class="section-title">BOOKINGS BY CUSTOMER</div>', unsafe_allow_html=True)
-        by_customer = (
-            filtered_booking.groupby("Customer Name", as_index=False)["Bookings"]
-            .sum()
-            .sort_values("Bookings", ascending=True)
-        )
-        fig = px.bar(
-            by_customer,
-            x="Bookings",
-            y="Customer Name",
-            orientation="h",
-            text="Bookings",
-        )
-        fig.update_traces(marker_color="#0b63ce", textposition="outside")
-        standard_chart_layout(fig, 330)
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-    with right:
+    with processing_col:
         processing_title = (
             "MONTHLY AVERAGE PROCESSING TIME / BOOKING"
             if use_monthly
@@ -1474,7 +1435,7 @@ elif page == "Booking Performance":
                 ),
             )
 
-            standard_chart_layout(fig, 330)
+            standard_chart_layout(fig, 350)
 
             fig.update_xaxes(
                 type="category",
@@ -1500,6 +1461,55 @@ elif page == "Booking Performance":
                 use_container_width=True,
                 config={"displayModeBar": False},
             )
+
+
+
+    # ========================================================
+    # ROW 2: BOOKING BREAKDOWN
+    # ========================================================
+    st.markdown("<br>", unsafe_allow_html=True)
+    customer_col, distribution_col = st.columns([1.4, 1], gap="medium")
+
+    with customer_col:
+        st.markdown('<div class="section-title">BOOKINGS BY CUSTOMER</div>', unsafe_allow_html=True)
+        by_customer = (
+            filtered_booking.groupby("Customer Name", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=True)
+        )
+        fig = px.bar(
+            by_customer,
+            x="Bookings",
+            y="Customer Name",
+            orientation="h",
+            text="Bookings",
+        )
+        fig.update_traces(marker_color="#0b63ce", textposition="outside")
+        standard_chart_layout(fig, 330)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+
+    with distribution_col:
+        st.markdown('<div class="section-title">BOOKING DISTRIBUTION</div>', unsafe_allow_html=True)
+        by_mode = (
+            filtered_booking.groupby("Transport Mode", as_index=False)["Bookings"]
+            .sum()
+            .sort_values("Bookings", ascending=False)
+        )
+        fig = px.pie(
+            by_mode,
+            names="Transport Mode",
+            values="Bookings",
+            hole=0.55,
+        )
+        fig.update_traces(textposition="inside", textinfo="label+percent")
+        fig.update_layout(
+            height=330,
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor="white",
+            showlegend=False,
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
