@@ -734,21 +734,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-st.sidebar.markdown(
-    """
-    <div style="
-        font-size:12px;
-        font-weight:700;
-        color:#D8E5F8;
-        letter-spacing:1px;
-        text-transform:uppercase;
-        margin-bottom:6px;
-    ">
-        Dashboard Menu
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.sidebar.write("Dashboard Menu")
 
 uploaded_file = None
 
