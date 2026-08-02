@@ -698,17 +698,55 @@ def render_wrapped_html_table(
 # ============================================================
 # SIDEBAR
 # ============================================================
-st.sidebar.markdown("## 📊 YVF Adoption")
 
 st.sidebar.markdown(
-    "<div style='color:#D8E5F8;font-size:17px;margin-top:-22px;margin-bottom:8px;'>CS HAD</div>",
+    """
+    <div style="padding-top:10px;padding-bottom:4px;">
+        <div style="
+            font-size:32px;
+            font-weight:700;
+            color:white;
+            line-height:1.2;
+        ">
+            📊 YVF Adoption
+        </div>
+
+        <div style="
+            font-size:17px;
+            color:#D8E5F8;
+            margin-top:4px;
+        ">
+            CS HAD
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
-st.sidebar.markdown("---")
+st.sidebar.markdown(
+    """
+    <hr style="
+        margin:12px 0 14px 0;
+        border:none;
+        border-top:1px solid rgba(255,255,255,0.15);
+    ">
+    """,
+    unsafe_allow_html=True,
+)
 
 st.sidebar.markdown(
-    "<div style='font-size:13px;font-weight:700;color:#D8E5F8;letter-spacing:0.5px;'>DASHBOARD MENU</div>",
+    """
+    <div style="
+        font-size:12px;
+        font-weight:700;
+        color:#D8E5F8;
+        letter-spacing:1px;
+        text-transform:uppercase;
+        margin-bottom:6px;
+    ">
+        Dashboard Menu
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
