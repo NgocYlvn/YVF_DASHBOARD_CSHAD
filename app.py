@@ -714,9 +714,10 @@ st.sidebar.markdown(
 uploaded_file = None
 
 page = st.sidebar.radio(
-    "Dashboard menu",
+    "",
     NAV_ITEMS,
     index=0,
+    label_visibility="collapsed",
 )
 
 
