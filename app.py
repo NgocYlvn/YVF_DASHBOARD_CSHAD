@@ -33,7 +33,7 @@ NAV_ITEMS = [
     "Overview",
     "Customer Adoption",
     "Booking Performance",
-    "User Issues & Improvements",
+    "Issues & Feedback",
 ]
 
 
@@ -1557,7 +1557,7 @@ elif page == "Booking Performance":
 
 
 # ============================================================
-# PAGE 4: USER ISSUES & IMPROVEMENTS
+# PAGE 4: ISSUES & IMPROVEMENTS
 # ============================================================
 else:
     st.markdown("### User Issues & Improvements")
