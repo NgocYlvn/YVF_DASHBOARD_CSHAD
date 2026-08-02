@@ -704,7 +704,7 @@ st.sidebar.caption("CS HAD")
 uploaded_file = None
 
 page = st.sidebar.radio(
-    "Navigation",
+    "Dashboard menu",
     NAV_ITEMS,
     index=0,
 )
