@@ -698,8 +698,18 @@ def render_wrapped_html_table(
 # ============================================================
 # SIDEBAR
 # ============================================================
-st.sidebar.markdown("## 📊 YVF Dashboard")
-st.sidebar.caption("CS HAD")
+st.sidebar.markdown("## 📊 YVF Adoption")
+st.sidebar.markdown(
+    "<div style='color:#C8D2E3;font-size:17px;margin-top:-12px;margin-bottom:18px;'>CS HAD</div>",
+    unsafe_allow_html=True,
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    "<div style='font-size:13px;font-weight:700;color:#D8E5F8;letter-spacing:0.5px;'>DASHBOARD MENU</div>",
+    unsafe_allow_html=True,
+)
 
 uploaded_file = None
 
