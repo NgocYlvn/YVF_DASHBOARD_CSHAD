@@ -928,7 +928,7 @@ elif page == "Customer Adoption":
     with c2:
         kpi_card("Total Onboarded", metrics["total_onboarded"])
     with c3:
-        kpi_card("Pending Onboard", metrics["pending"], accent="accent-amber")
+        kpi_card("FY2026 Pending Onboard", metrics["pending"], accent="accent-amber")
 
     st.markdown("<br>", unsafe_allow_html=True)
     left, right = st.columns([1.6, 1])
