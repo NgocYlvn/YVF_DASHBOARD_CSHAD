@@ -1618,7 +1618,7 @@ else:
     )
 
     tab_issues, tab_feedback = st.tabs(
-        ["User Issue Log", "User Feedback"]
+        ["User Issue", "User Feedback"]
     )
 
     with tab_issues:
