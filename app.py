@@ -1335,9 +1335,9 @@ elif page == "Booking Performance":
 
     with processing_col:
         processing_title = (
-            "MONTHLY AVERAGE PROCESSING TIME / BOOKING"
+            "MONTHLY AVG. PROCESSING TIME / BOOKING"
             if use_monthly
-            else "DAILY AVERAGE PROCESSING TIME / BOOKING"
+            else "DAILY AVG. PROCESSING TIME / BOOKING"
         )
 
         st.markdown(
