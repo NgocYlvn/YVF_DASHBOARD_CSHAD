@@ -1379,88 +1379,127 @@ elif page == "Booking Performance":
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with right:
+        processing_title = (
+            "MONTHLY AVERAGE PROCESSING TIME / BOOKING"
+            if use_monthly
+            else "DAILY AVERAGE PROCESSING TIME / BOOKING"
+        )
+
         st.markdown(
-            '<div class="section-title">AVERAGE PROCESSING TIME/ BOOKING</div>',
+            f'<div class="section-title">{processing_title}</div>',
             unsafe_allow_html=True,
         )
 
-        processing = (
-            filtered_booking[
-                filtered_booking["Bookings"] > 0
-            ]
-            .groupby("Booking Date", as_index=False)
-            .agg(
-                Avg_Processing_Time=("Processing Time (min)", "mean"),
-                Booking_Volume=("Bookings", "sum"),
-            )
-            .sort_values("Booking Date")
+        processing_source = filtered_booking[
+            (filtered_booking["Bookings"] > 0)
+            & filtered_booking["Processing Time (min)"].notna()
+            & filtered_booking["Booking Date"].notna()
+        ].copy()
+
+        processing_source["Weighted Processing Time"] = (
+            processing_source["Processing Time (min)"]
+            * processing_source["Bookings"]
         )
 
-        processing["Booking Date"] = pd.to_datetime(
-            processing["Booking Date"],
-            errors="coerce",
+        if use_monthly:
+            processing_source["Period Start"] = (
+                processing_source["Booking Date"]
+                .dt.to_period("M")
+                .dt.to_timestamp()
+            )
+            period_format = "%b %Y"
+            tick_angle = -30 if processing_source["Period Start"].nunique() > 12 else 0
+            hover_date_format = "%b %Y"
+        else:
+            processing_source["Period Start"] = (
+                processing_source["Booking Date"].dt.normalize()
+            )
+            period_format = "%d %b"
+            tick_angle = -45 if processing_source["Period Start"].nunique() > 15 else 0
+            hover_date_format = "%d %b %Y"
+
+        processing = (
+            processing_source
+            .groupby("Period Start", as_index=False)
+            .agg(
+                Total_Weighted_Time=("Weighted Processing Time", "sum"),
+                Booking_Volume=("Bookings", "sum"),
+            )
+            .sort_values("Period Start")
+        )
+
+        processing["Avg_Processing_Time"] = np.where(
+            processing["Booking_Volume"] > 0,
+            processing["Total_Weighted_Time"] / processing["Booking_Volume"],
+            np.nan,
         )
 
         processing = processing.dropna(
-            subset=["Booking Date", "Avg_Processing_Time"]
+            subset=["Period Start", "Avg_Processing_Time"]
         )
 
-        # Display only the date label; do not show time values.
-        processing["Date Label"] = processing["Booking Date"].dt.strftime("%d %b")
-
-        fig = px.line(
-            processing,
-            x="Date Label",
-            y="Avg_Processing_Time",
-            markers=True,
-            custom_data=[
-                "Booking Date",
-                "Booking_Volume",
-            ],
-            category_orders={
-                "Date Label": processing["Date Label"].tolist()
-            },
+        processing["Period Label"] = (
+            processing["Period Start"].dt.strftime(period_format)
         )
 
-        fig.update_traces(
-            line_color="#ed6b21",
-            marker_color="#ed6b21",
-            line_width=2.5,
-            marker_size=8,
-            hovertemplate=(
-                "%{customdata[0]|%d %b %Y}"
-                "<br>Processing time: %{y:.1f} min"
-                "<br>Bookings: %{customdata[1]:.0f}"
-                "<extra></extra>"
-            ),
-        )
+        if processing.empty:
+            st.info(
+                "No processing-time data available for the selected period."
+            )
+        else:
+            fig = px.line(
+                processing,
+                x="Period Label",
+                y="Avg_Processing_Time",
+                markers=True,
+                custom_data=[
+                    "Period Start",
+                    "Booking_Volume",
+                ],
+                category_orders={
+                    "Period Label": processing["Period Label"].tolist()
+                },
+            )
 
-        standard_chart_layout(fig, 330)
+            fig.update_traces(
+                line_color="#ed6b21",
+                marker_color="#ed6b21",
+                line_width=2.5,
+                marker_size=8,
+                hovertemplate=(
+                    f"%{{customdata[0]|{hover_date_format}}}"
+                    "<br>Average processing time: %{y:.1f} min"
+                    "<br>Bookings: %{customdata[1]:.0f}"
+                    "<extra></extra>"
+                ),
+            )
 
-        fig.update_xaxes(
-            type="category",
-            categoryorder="array",
-            categoryarray=processing["Date Label"].tolist(),
-            tickangle=0,
-            title_text="",
-            showticklabels=True,
-            showline=True,
-            ticks="outside",
-            tickfont={"size": 11},
-        )
+            standard_chart_layout(fig, 330)
 
-        fig.update_yaxes(
-            title_text="",
-            rangemode="tozero",
-        )
-        fig.update_yaxes(
-            title_text="Minutes (min)"
-        )
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={"displayModeBar": False},
-        )
+            fig.update_xaxes(
+                type="category",
+                categoryorder="array",
+                categoryarray=processing["Period Label"].tolist(),
+                tickangle=tick_angle,
+                title_text="",
+                showticklabels=True,
+                showline=True,
+                ticks="outside",
+                tickfont={
+                    "size": 10 if len(processing) > 20 else 11
+                },
+            )
+
+            fig.update_yaxes(
+                title_text="Minutes (min)",
+                rangemode="tozero",
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
