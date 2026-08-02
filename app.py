@@ -1176,23 +1176,26 @@ elif page == "Booking Performance":
     avg_processing = processing_series.mean()
     avg_processing = 0 if pd.isna(avg_processing) else round(float(avg_processing), 1)
 
-   booking_achievement = safe_divide(total_bookings, metrics["booking_target"])
+    booking_achievement = safe_divide(
+        total_bookings,
+        metrics["booking_target"],
+    )
 
     c1, c2, c3 = st.columns(3, gap="small")
-    
+
     with c1:
         kpi_card(
             "Booking Volume",
             total_bookings,
         )
-    
+
     with c2:
         kpi_card(
             "Target Achievement",
             format_percent(booking_achievement, 1),
             accent="accent-orange",
         )
-    
+
     with c3:
         kpi_card(
             "Avg. Processing Time / Booking",
