@@ -1301,7 +1301,7 @@ elif page == "Booking Performance":
 else:
     st.markdown("### User Issues & Improvements")
     st.caption(
-        "Overview of user issues, proposed improvements, and user feedback."
+        "Track user feedback, reported issues, and improvement actions."
     )
 
     # --------------------------------------------------------
