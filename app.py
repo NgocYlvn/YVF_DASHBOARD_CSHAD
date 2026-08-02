@@ -700,7 +700,7 @@ def render_wrapped_html_table(
 # ============================================================
 st.sidebar.markdown("## 📊 YVF Adoption")
 st.sidebar.markdown(
-    "<div style='color:#C8D2E3;font-size:17px;margin-top:-12px;margin-bottom:18px;'>CS HAD</div>",
+    "<div style='color:#D8E5F8;font-size:17px;margin-top:-12px;margin-bottom:18px;'>CS HAD</div>",
     unsafe_allow_html=True,
 )
 
