@@ -732,17 +732,29 @@ st.sidebar.markdown(
 
 st.sidebar.markdown(
     """
-    <div style="
-        color:#C8D2E3;
-        font-size:11px;
-        line-height:1.6;
-        text-align:center;
-        padding-bottom:8px;
+    <hr style="
+        margin:14px 0 12px 0;
+        border:none;
+        border-top:1px solid rgba(255,255,255,0.15);
     ">
-        <b>FY2026</b><br>
-        Version 1.0<br>
-        © 2026 CS HAD<br>
-        Internal Use Only
+
+    <div style="
+        color:#D8E5F8;
+        font-size:11px;
+        line-height:1.7;
+        padding-left:4px;
+    ">
+        <div style="font-weight:700;">
+            📅 FY2026 · Version 1.0
+        </div>
+
+        <div>
+            © 2026 CS HAD
+        </div>
+
+        <div>
+            🔒 Internal Use Only
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
