@@ -785,8 +785,8 @@ try:
     metrics["ytd_bookings"] = int(
         overview_number(overview, 3, 6, "G4")
     )
-    metrics["avg_time"] = overview_number(
-        overview, 3, 7, "H4"
+    metrics["avg_time"] = int(
+        overview_number(overview, 3, 7, "H4")
     )
     metrics["onboarding_target"] = int(
         overview_number(overview, 3, 8, "I4")
