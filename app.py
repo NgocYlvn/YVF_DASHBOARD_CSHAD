@@ -1032,7 +1032,7 @@ elif page == "Customer Adoption":
     left, right = st.columns([1.6, 1])
 
     with left:
-        st.markdown('<div class="section-title">CUSTOMER STATUS & VOLUME</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">CUSTOMER ONBOARDING STATUS</div>', unsafe_allow_html=True)
         display_cols = ["Customer Name", "Total Volume", "YVF Status"]
         adoption_table = filtered_customer[display_cols].sort_values(
             "Total Volume", ascending=False
@@ -1060,7 +1060,7 @@ elif page == "Customer Adoption":
         )
 
     with right:
-        st.markdown('<div class="section-title">CUSTOMER ONBOARDING STATUS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">YOY CUSTOMER ONBOARDING</div>', unsafe_allow_html=True)
         status_count = (
             filtered_customer.groupby("YVF Status", as_index=False)
             .size()
