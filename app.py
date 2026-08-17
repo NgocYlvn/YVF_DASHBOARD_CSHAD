@@ -580,7 +580,8 @@ def calculate_metrics(customer, booking, onboarded):
 
 
 def gauge_chart(value, title, detail, color="#ed6b21"):
-    percentage = min(max(value * 100, 0), 100)
+    percentage = max(value * 100, 0)
+    gauge_max = max(120, int(np.ceil(percentage / 20.0) * 20))
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
@@ -599,11 +600,11 @@ def gauge_chart(value, title, detail, color="#ed6b21"):
             gauge={
                 "shape": "angular",
                 "axis": {
-                    "range": [0, 100],
+                    "range": [0, gauge_max],
                     "tickwidth": 1,
                     "tickfont": {"size": 9},
-                    "tickvals": [0, 50, 100],
-                    "ticktext": ["0%", "50%", "100%"],
+                "tickvals": [0, 50, 100, gauge_max],
+                "ticktext": ["0%", "50%", "100%", f"{gauge_max}%"],
                 },
                 "bar": {"color": color, "thickness": 0.32},
                 "bgcolor": "#e9eef5",
